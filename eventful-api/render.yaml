@@ -95,3 +95,4 @@ services:
     name: eventful-redis
     plan: free
     maxmemoryPolicy: noeviction
+    ipAllowList: []
