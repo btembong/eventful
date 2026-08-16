@@ -1,0 +1,510 @@
+// Eventful domain model
+// Key decisions recorded in CLAUDE.md — read before changing structure.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  CREATOR
+  EVENTEE
+  ADMIN
+}
+
+enum TierType {
+  FREE
+  PAID
+  INVITE_ONLY
+}
+
+enum OrderStatus {
+  PENDING    // awaiting payment confirmation
+  PAID       // payment confirmed (or free ticket created)
+  CANCELLED  // cancelled / refunded
+}
+
+enum TicketStatus {
+  PENDING_PAYMENT // created but payment not confirmed
+  PAID            // payment confirmed (or free ticket)
+  CHECKED_IN      // QR scanned at the door
+  CANCELLED       // cancelled before event
+  REFUNDED        // refund processed
+}
+
+enum ReminderChannel {
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum EventCategory {
+  CONCERT
+  THEATER
+  SPORTS
+  CULTURAL
+  OTHER
+}
+
+enum CreatorStatus {
+  NOT_APPLIED // default — never submitted an application
+  PENDING     // application submitted, awaiting admin review
+  APPROVED    // approved; can publish events and receive payouts
+  REJECTED    // rejected; shown reason, can resubmit
+}
+
+enum OrgType {
+  INDIVIDUAL
+  COMPANY
+  NGO
+}
+
+enum EventMemberRole {
+  SCANNER         // can check in attendees only
+  FINANCE_VIEWER  // can view payments/earnings but not modify
+  CO_ORGANIZER    // full event management except cancellation
+}
+
+enum OrgMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum PayoutType {
+  MTN_MOMO
+  ORANGE_MONEY
+  BANK_TRANSFER
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  phone        String?   @unique
+  passwordHash String
+  roles        Role[]    // additive: a user can be both CREATOR and EVENTEE
+  fullName     String
+  emailVerifiedAt DateTime? // null = not yet verified; set on email link click
+  createdAt       DateTime  @default(now())
+  deletedAt       DateTime? // soft-delete; every query must filter deletedAt IS NULL
+
+  // ── MFA / TOTP ─────────────────────────────────────────────────────────
+  mfaSecret  String?  // base32 TOTP secret (encrypted at rest in production)
+  mfaEnabled Boolean  @default(false)
+
+  // ── Creator onboarding ─────────────────────────────────────────────────
+  creatorStatus          CreatorStatus @default(NOT_APPLIED)
+  orgName                String?
+  orgType                OrgType?
+  orgPhone               String?
+  orgWebsite             String?
+  orgDescription         String?
+  kycDocType             String?
+  kycDocUrl              String?
+  payoutType             PayoutType?
+  payoutNumber           String?
+  payoutBankName         String?
+  creatorAppliedAt       DateTime?
+  creatorReviewedAt      DateTime?
+  creatorRejectedReason  String?
+
+  eventsCreated    Event[]           @relation("CreatedEvents")
+  tickets          Ticket[]
+  orders           Order[]
+  reminders        ReminderPref[]
+  auditLogs        AuditLog[]        @relation("ActorLogs")
+  webhookEndpoints WebhookEndpoint[] @relation("CreatorWebhooks")
+  payouts          Payout[]
+  waitlistEntries  WaitlistEntry[]
+  eventMemberships EventMember[]
+  orgMemberships   OrgMember[]
+  apiKeys          ApiKey[]
+  discountCodes    DiscountCode[]
+  announcements    Announcement[]
+  supportTickets   SupportTicket[]
+  referrals        Referral[]
+}
+
+model Event {
+  id          String        @id @default(uuid())
+  creatorId   String
+  creator     User          @relation("CreatedEvents", fields: [creatorId], references: [id])
+  title       String
+  description String
+  category    EventCategory
+  venue       String
+  startsAt    DateTime
+  endsAt      DateTime
+  capacity    Int           // total max ticket sales across all tiers
+  price       Decimal       @db.Decimal(12, 2) // 0 = free; ignored when tiers are present
+  currency    String        @default("XAF")
+  shareSlug   String        @unique
+  isCancelled Boolean       @default(false)
+
+  // Publication state
+  isPublished   Boolean  @default(false) // live at /e/[shareSlug]; buyers can purchase
+  inDiscovery   Boolean  @default(false) // appears in public browse/search page
+  coverImageUrl String?                  // uploaded event cover image URL
+
+  // Validated against metadataSchemaByCategory[category]
+  metadata Json?
+
+  // Custom message included in every ticket confirmation email for this event
+  confirmationMessage String?
+
+  // Creator-set reminder defaults in minutes before event
+  defaultReminderOffsets Int[]
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime? // soft-delete
+
+  tickets       Ticket[]
+  tiers         TicketTier[]
+  orders        Order[]
+  payments      Payment[]
+  waitlist      WaitlistEntry[]
+  members       EventMember[]
+  announcements Announcement[]
+}
+
+model TicketTier {
+  id          String    @id @default(uuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id])
+  name        String    // e.g. "Early Bird", "VIP", "General Admission"
+  description String?
+  type        TierType  @default(PAID)
+  price       Decimal   @db.Decimal(12, 2) // 0 for FREE tiers
+  currency    String    @default("XAF")
+  capacity    Int       // max tickets for this tier
+  sold        Int       @default(0)
+  orderLimit  Int       @default(10)  // max tickets per single order
+  isOnSale    Boolean   @default(true)
+  salesStart  DateTime? // null = on sale immediately when event is published
+  salesEnd    DateTime? // null = closes when event starts
+  perks       String[]  // e.g. ["Free drink", "Priority entry"]
+  inviteCode  String?   // required for INVITE_ONLY tiers
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  tickets Ticket[]
+  orders  Order[]
+}
+
+// An order represents a single checkout session: one buyer, one tier, N tickets.
+// Free tickets are created directly as PAID. Paid tickets stay PENDING until
+// the Tranzak webhook confirms payment.
+model Order {
+  id          String      @id @default(uuid())
+  eventId     String
+  event       Event       @relation(fields: [eventId], references: [id])
+  tierId      String
+  tier        TicketTier  @relation(fields: [tierId], references: [id])
+  quantity    Int
+  unitPrice   Decimal     @db.Decimal(12, 2)
+  totalAmount Decimal     @db.Decimal(12, 2)
+  currency    String      @default("XAF")
+  status      OrderStatus @default(PENDING)
+
+  // Buyer info — supports guest checkout (userId null)
+  buyerName   String
+  buyerEmail  String
+  buyerPhone  String?
+  userId      String?     // null = guest checkout; set if logged-in user purchases
+  user        User?       @relation(fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  tickets        Ticket[]
+  payment        Payment?
+  supportTickets SupportTicket[]
+}
+
+model Ticket {
+  id          String       @id @default(uuid())
+  eventId     String
+  event       Event        @relation(fields: [eventId], references: [id])
+  orderId     String
+  order       Order        @relation(fields: [orderId], references: [id])
+  tierId      String?
+  tier        TicketTier?  @relation(fields: [tierId], references: [id])
+
+  // eventeeId is null for guest-checkout tickets
+  eventeeId   String?
+  eventee     User?        @relation(fields: [eventeeId], references: [id])
+
+  status      TicketStatus @default(PENDING_PAYMENT)
+  // HMAC(ticketId + eventId + QR_SIGNING_SECRET) — prevents forged codes
+  qrPayload   String       @unique
+  checkedInAt DateTime?
+  purchasedAt DateTime     @default(now())
+
+  reminders ReminderPref[]
+  referral  Referral?
+}
+
+// One payment per order (covers all tickets in that order).
+model Payment {
+  id      String @id @default(uuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
+
+  tranzakRequestId String  @unique
+  webhookEventId   String? @unique  // idempotency key from Tranzak callback
+
+  amount         Decimal  @db.Decimal(12, 2)
+  currency       String
+  platformFee    Decimal? @db.Decimal(12, 2)
+  platformFeePct Decimal? @db.Decimal(5, 2)
+  status         String   // "pending" | "success" | "failed"
+  paidAt         DateTime?
+  createdAt      DateTime @default(now())
+}
+
+model WaitlistEntry {
+  id          String    @id @default(uuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  tierId      String?
+  notifiedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model Payout {
+  id          String    @id @default(uuid())
+  creatorId   String
+  creator     User      @relation(fields: [creatorId], references: [id])
+  amount      Decimal   @db.Decimal(12, 2)
+  currency    String
+  status      String    @default("pending")
+  periodStart DateTime
+  periodEnd   DateTime
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model ReminderPref {
+  id            String          @id @default(uuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  ticketId      String?
+  ticket        Ticket?         @relation(fields: [ticketId], references: [id])
+  eventId       String
+  offsetMinutes Int
+  channel       ReminderChannel
+  sentAt        DateTime?
+  createdAt     DateTime        @default(now())
+}
+
+// ─── Outbound webhooks ─────────────────────────────────────────────────────────
+
+model WebhookEndpoint {
+  id        String   @id @default(uuid())
+  creatorId String
+  creator   User     @relation("CreatorWebhooks", fields: [creatorId], references: [id])
+  url       String
+  secret    String
+  events    String[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  deliveries WebhookDelivery[]
+}
+
+model WebhookDelivery {
+  id         String          @id @default(uuid())
+  endpointId String
+  endpoint   WebhookEndpoint @relation(fields: [endpointId], references: [id])
+  event      String
+  payload    Json
+  status     String
+  attempts   Int             @default(0)
+  lastError  String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actor      User?    @relation("ActorLogs", fields: [actorId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  meta       Json?
+  createdAt  DateTime @default(now())
+}
+
+// ─── Fine-grained event roles ──────────────────────────────────────────────────
+
+model EventMember {
+  id        String          @id @default(uuid())
+  eventId   String
+  event     Event           @relation(fields: [eventId], references: [id])
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  role      EventMemberRole
+  createdAt DateTime        @default(now())
+
+  @@unique([eventId, userId])
+}
+
+// ─── Organizations ──────────────────────────────────────────────────────────────
+
+model Organization {
+  id        String      @id @default(uuid())
+  name      String
+  slug      String      @unique
+  logoUrl   String?
+  website   String?
+  createdAt DateTime    @default(now())
+
+  members OrgMember[]
+}
+
+model OrgMember {
+  id     String        @id @default(uuid())
+  orgId  String
+  org    Organization  @relation(fields: [orgId], references: [id])
+  userId String
+  user   User          @relation(fields: [userId], references: [id])
+  role   OrgMemberRole @default(MEMBER)
+  joinedAt DateTime    @default(now())
+
+  @@unique([orgId, userId])
+}
+
+// ─── API Keys ──────────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  name       String
+  prefix     String    @unique
+  keyHash    String
+  scopes     String[]
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+}
+
+// ─── Discount Codes ────────────────────────────────────────────────────────────
+
+enum DiscountType {
+  PERCENT
+  FLAT
+}
+
+model DiscountCode {
+  id             String       @id @default(uuid())
+  creatorId      String
+  creator        User         @relation(fields: [creatorId], references: [id])
+  code           String
+  type           DiscountType
+  value          Float
+  maxUses        Int?
+  usedCount      Int          @default(0)
+  minOrderAmount Float?
+  startsAt       DateTime?
+  expiresAt      DateTime?
+  isActive       Boolean      @default(true)
+  eventIds       String[]     @default([])
+  createdAt      DateTime     @default(now())
+
+  @@unique([creatorId, code])
+  @@index([creatorId])
+}
+
+// ─── Announcements ────────────────────────────────────────────────────────────
+
+enum AnnouncementStatus {
+  SENT
+  FAILED
+}
+
+model Announcement {
+  id             String             @id @default(uuid())
+  creatorId      String
+  creator        User               @relation(fields: [creatorId], references: [id])
+  eventId        String
+  event          Event              @relation(fields: [eventId], references: [id])
+  subject        String
+  body           String
+  recipientCount Int                @default(0)
+  status         AnnouncementStatus @default(SENT)
+  sentAt         DateTime           @default(now())
+
+  @@index([creatorId])
+  @@index([eventId])
+}
+
+// ─── Support Tickets ──────────────────────────────────────────────────────────
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model SupportTicket {
+  id        String        @id @default(uuid())
+  buyerId   String
+  buyer     User          @relation(fields: [buyerId], references: [id])
+  orderId   String
+  order     Order         @relation(fields: [orderId], references: [id])
+  subject   String
+  status    SupportStatus @default(OPEN)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  messages SupportMessage[]
+
+  @@index([buyerId])
+  @@index([orderId])
+}
+
+model SupportMessage {
+  id          String        @id @default(uuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id])
+  body        String
+  fromCreator Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+
+  @@index([ticketId])
+}
+
+// ─── Referrals ────────────────────────────────────────────────────────────────
+
+model Referral {
+  id           String   @id @default(uuid())
+  referrerId   String
+  referrer     User     @relation(fields: [referrerId], references: [id])
+  ticketId     String   @unique
+  ticket       Ticket   @relation(fields: [ticketId], references: [id])
+  referredOrderId String?
+  discountCodeId  String?
+  rewardPaid   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([referrerId])
+}

@@ -1,0 +1,97 @@
+services:
+  # ── API Web Service ──────────────────────────────────────────────────────────
+  - type: web
+    name: eventful-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npm run build && npm run migrate:deploy
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false           # paste your Neon pooled URL
+      - key: DIRECT_URL
+        sync: false           # paste your Neon direct URL (for migrations)
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: eventful-redis
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d
+      - key: QR_SIGNING_SECRET
+        generateValue: true
+      - key: TRANZAK_APP_ID
+        sync: false
+      - key: TRANZAK_APP_KEY
+        sync: false
+      - key: TRANZAK_ENV
+        value: sandbox
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        value: noreply@eventful.app
+      - key: BREVO_SENDER_NAME
+        value: Eventful
+      - key: APP_BASE_URL
+        sync: false           # set to your Vercel URL e.g. https://eventful.vercel.app
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  # ── BullMQ Worker (background jobs — reminders, emails) ─────────────────────
+  - type: worker
+    name: eventful-worker
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npm run build
+    startCommand: npm run worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: eventful-redis
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        sync: false           # must match the API service value
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: QR_SIGNING_SECRET
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        value: noreply@eventful.app
+      - key: BREVO_SENDER_NAME
+        value: Eventful
+      - key: APP_BASE_URL
+        sync: false
+      - key: TRANZAK_APP_ID
+        sync: false
+      - key: TRANZAK_APP_KEY
+        sync: false
+      - key: TRANZAK_ENV
+        value: sandbox
+
+  # ── Redis (shared by API + Worker) ──────────────────────────────────────────
+  - type: redis
+    name: eventful-redis
+    plan: free
+    maxmemoryPolicy: noeviction

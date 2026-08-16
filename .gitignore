@@ -1,0 +1,11 @@
+# Planning & internal docs — keep off git
+CLAUDE (5).md
+EVENTFUL_PLAN.md
+TECHNICAL.md
+TECHNICAL.html
+ONBOARDING.html
+user-manual.html
+
+# OS
+.DS_Store
+Thumbs.db
