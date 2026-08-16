@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CheckIcon, MailIcon, XIcon } from '@/components/icons';
+import { CheckCircleIcon, MailIcon, XIcon } from '@/components/icons';
 
 export default function VerifyEmailPage() {
   return (
@@ -63,8 +63,8 @@ function VerifyEmailContent() {
   if (state === 'success') {
     return (
       <div className="w-full max-w-md rounded-3xl bg-white p-10 shadow-xl ring-1 ring-slate-100 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
-          <CheckIcon className="h-8 w-8 text-emerald-600" />
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-100">
+          <CheckCircleIcon className="h-8 w-8 text-brand-600" />
         </div>
         <h1 className="mt-5 text-xl font-extrabold text-slate-900">Email verified!</h1>
         <p className="mt-2 text-sm text-slate-500">Your account is now active. Sign in to start discovering events.</p>
@@ -84,7 +84,7 @@ function VerifyEmailContent() {
         <h1 className="mt-5 text-xl font-extrabold text-slate-900">Link expired</h1>
         <p className="mt-2 text-sm text-slate-500">{message || 'This verification link has expired or already been used.'}</p>
         {resent ? (
-          <p className="mt-5 text-sm font-semibold text-emerald-600">A new link has been sent to your inbox.</p>
+          <p className="mt-5 text-sm font-semibold text-brand-600">A new link has been sent to your inbox.</p>
         ) : (
           <button onClick={resend} className="mt-5 rounded-xl bg-brand-600 px-8 py-3 text-sm font-bold text-white transition hover:bg-brand-500">
             Resend verification email
@@ -106,7 +106,7 @@ function VerifyEmailContent() {
       </p>
       <p className="mt-4 text-xs text-slate-400">Didn't receive it? Check your spam folder, or</p>
       {resent ? (
-        <p className="mt-2 text-sm font-semibold text-emerald-600">A new link has been sent!</p>
+        <p className="mt-2 text-sm font-semibold text-brand-600">A new link has been sent!</p>
       ) : (
         <button onClick={resend} className="mt-2 text-sm font-bold text-brand-600 hover:text-brand-500">
           resend the email

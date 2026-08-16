@@ -115,20 +115,20 @@ export default function LoginPage() {
             )}
 
             {unverified && (
-              <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-                <p className="font-semibold">Email not verified</p>
-                <p className="mt-0.5 text-xs text-amber-700">
+              <div className="rounded-xl bg-brand-50 border border-brand-200 px-4 py-3 text-sm text-brand-800">
+                <p className="font-semibold text-brand-700">Email not verified</p>
+                <p className="mt-0.5 text-xs text-brand-600">
                   Check your inbox for the activation link, or{' '}
                   <button
                     type="button"
                     onClick={handleResend}
                     disabled={resendLoading}
-                    className="font-bold underline hover:text-amber-900 disabled:opacity-50"
+                    className="font-bold underline hover:text-brand-900 disabled:opacity-50"
                   >
                     {resendLoading ? 'sending…' : 'resend it'}
                   </button>.
                 </p>
-                {resendMsg && <p className="mt-1 text-xs text-emerald-700 font-semibold">{resendMsg}</p>}
+                {resendMsg && <p className="mt-1 text-xs text-brand-600 font-semibold">{resendMsg}</p>}
               </div>
             )}
 

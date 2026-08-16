@@ -117,47 +117,47 @@ export default async function HomePage() {
       <Navbar />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen overflow-hidden bg-white pt-28">
+      <section className="relative overflow-hidden bg-white pt-20 sm:pt-28">
         {/* Subtle dot grid */}
         <div className="hero-grid absolute inset-0 opacity-40" />
         {/* Soft gradient orbs */}
         <div className="pointer-events-none absolute -left-40 top-0 h-[500px] w-[500px] rounded-full bg-brand-300/15 blur-[120px]" />
         <div className="pointer-events-none absolute -right-20 bottom-0 h-[400px] w-[400px] rounded-full bg-brand-400/10 blur-[100px]" />
 
-        <div className="relative mx-auto max-w-7xl px-6 py-24 lg:px-8">
-          <div className="grid items-center gap-16 lg:grid-cols-2">
+        <div className="relative mx-auto max-w-7xl px-5 pb-10 pt-8 sm:px-6 sm:pb-20 sm:pt-12 lg:px-8">
+          <div className="grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
             {/* Left — copy */}
             <div>
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand-600">
+              <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-brand-600 sm:px-4 sm:text-xs">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
                 Live events near you
               </div>
 
-              <h1 className="mt-6 font-slackey text-5xl leading-[1.08] tracking-tight text-slate-900 lg:text-6xl xl:text-7xl">
+              <h1 className="mt-5 font-slackey text-4xl leading-[1.1] tracking-tight text-slate-900 sm:mt-6 sm:text-5xl lg:text-6xl xl:text-7xl">
                 One platform for every{' '}
                 <span className="gradient-text">great event.</span>
               </h1>
 
-              <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-500">
+              <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-500 sm:mt-6 sm:text-lg">
                 Concerts. Theater. Sports. Festivals. Buy tickets in seconds, get a signed QR ticket, walk in — no printouts, no hassle.
               </p>
 
-              <div className="mt-10 flex flex-wrap gap-4">
-                <Link href="/events" className="btn-primary text-base px-8 py-3.5">
+              <div className="mt-7 flex flex-wrap gap-3 sm:mt-10 sm:gap-4">
+                <Link href="/events" className="btn-primary px-6 py-3 text-sm sm:px-8 sm:py-3.5 sm:text-base">
                   Browse events
                   <ArrowRightIcon className="h-4 w-4" />
                 </Link>
-                <Link href="/create" className="rounded-full border-2 border-brand-200 bg-white px-8 py-3.5 text-base font-bold text-brand-600 transition hover:bg-brand-50 hover:-translate-y-0.5">
+                <Link href="/create" className="rounded-full border-2 border-brand-200 bg-white px-6 py-3 text-sm font-bold text-brand-600 transition hover:bg-brand-50 hover:-translate-y-0.5 sm:px-8 sm:py-3.5 sm:text-base">
                   Host an event
                 </Link>
               </div>
 
               {/* Trust row */}
-              <div className="mt-12 flex items-center gap-4">
+              <div className="mt-8 flex items-center gap-3 sm:mt-12 sm:gap-4">
                 <div className="flex -space-x-2">
                   {['bg-brand-400', 'bg-brand-300', 'bg-brand-500', 'bg-brand-600'].map((bg, i) => (
-                    <div key={i} className={`h-8 w-8 rounded-full border-2 border-white ${bg} flex items-center justify-center text-xs font-bold text-white`}>
+                    <div key={i} className={`h-7 w-7 rounded-full border-2 border-white ${bg} flex items-center justify-center text-[10px] font-bold text-white sm:h-8 sm:w-8 sm:text-xs`}>
                       {['A', 'K', 'M', 'T'][i]}
                     </div>
                   ))}
@@ -168,12 +168,12 @@ export default async function HomePage() {
               </div>
 
               {/* Live event ticker */}
-              <div className="mt-8">
+              <div className="mt-6 sm:mt-8">
                 <div className="mb-2.5 flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
                   <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Live on Eventful</span>
                 </div>
-                <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                   {LIVE_EVENTS.map((ev) => (
                     <div key={ev.name} className="flex-none rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm">
                       <p className="text-xs font-bold text-slate-800 whitespace-nowrap">{ev.name}</p>
@@ -189,10 +189,35 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Right — stacked tickets */}
-            <div className="flex items-center justify-center py-16">
-              <div className="relative" style={{ width: '480px', height: '440px' }}>
-                {/* Back ticket — very subtle tilt, peeking behind */}
+            {/* Right — ticket visual */}
+            <div className="flex items-center justify-center py-6 lg:py-16">
+              {/* Mobile: single featured ticket, full-width */}
+              <div className="relative w-full max-w-sm lg:hidden">
+                <div style={{ transform: 'rotate(-1.5deg)' }}>
+                  <TicketCard
+                    eventName="Afro Beats Summer Fest"
+                    category="Concert"
+                    venue="Grand Arena, Lagos"
+                    date="Aug 30, 2026"
+                    time="7:00 PM"
+                    price="XAF 15,000"
+                  />
+                </div>
+                {/* Check-in badge */}
+                <div className="absolute -bottom-3 right-4 z-20 flex items-center gap-2 rounded-xl border border-brand-200 bg-white px-3 py-2 shadow-lg">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600">
+                    <CheckCircleIcon className="h-3 w-3 text-white" />
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-bold text-brand-600">Checked in</p>
+                    <p className="text-[9px] text-slate-400">QR verified • just now</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop: stacked two-ticket layout */}
+              <div className="relative hidden lg:block" style={{ width: '480px', height: '440px' }}>
+                {/* Back ticket */}
                 <div className="absolute top-10 left-6" style={{ transform: 'rotate(4deg)', opacity: 0.65 }}>
                   <TicketCard
                     eventName="Lagos Theater Night"
@@ -203,8 +228,7 @@ export default async function HomePage() {
                     price="XAF 8,000"
                   />
                 </div>
-
-                {/* Front ticket — slight counter-tilt, floating */}
+                {/* Front ticket */}
                 <div className="absolute top-0 left-0" style={{ transform: 'rotate(-2deg)' }}>
                   <div className="animate-float">
                     <TicketCard
@@ -217,7 +241,6 @@ export default async function HomePage() {
                     />
                   </div>
                 </div>
-
                 {/* Check-in badge */}
                 <div className="absolute -bottom-4 right-8 z-20 flex items-center gap-2.5 rounded-2xl border border-brand-200 bg-white px-4 py-2.5 shadow-lg">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600">
@@ -236,8 +259,8 @@ export default async function HomePage() {
 
       {/* ── Stats bar ────────────────────────────────────────────────────── */}
       <section className="relative z-10 bg-brand-950">
-        <div className="mx-auto max-w-6xl px-6 py-14 lg:px-8">
-          <dl className="grid grid-cols-2 gap-8 sm:grid-cols-5">
+        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6 sm:py-14 lg:px-8">
+          <dl className="grid grid-cols-2 gap-6 sm:grid-cols-5 sm:gap-8">
             {STATS.map(({ value, label }) => (
               <div key={label} className="text-center">
                 <dt className="text-3xl font-extrabold tracking-tight text-brand-500">{value}</dt>
@@ -249,8 +272,8 @@ export default async function HomePage() {
       </section>
 
       {/* ── Trusted by ───────────────────────────────────────────────────── */}
-      <section className="bg-brand-950 border-t border-white/5 pb-14">
-        <div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="bg-brand-950 border-t border-white/5 pb-10 sm:pb-14">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-8">
           <p className="text-center text-[10px] font-bold uppercase tracking-[0.2em] text-white/20 mb-8">
             Trusted by event organisers across Central Africa
           </p>
@@ -265,18 +288,18 @@ export default async function HomePage() {
       </section>
 
       {/* ── Category grid ────────────────────────────────────────────────── */}
-      <section className="bg-brand-950 py-28">
-        <div className="mx-auto max-w-6xl px-6 lg:px-8">
+      <section className="bg-brand-950 py-12 sm:py-20 lg:py-28">
+        <div className="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-4xl font-extrabold tracking-tight text-white">
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Whatever moves you
             </h2>
-            <p className="mt-4 text-lg text-white/40">
+            <p className="mt-3 text-base text-white/40 sm:mt-4 sm:text-lg">
               From sold-out arenas to intimate gallery nights — there&apos;s something for everyone.
             </p>
           </div>
 
-          <div className="mt-14 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-14 sm:gap-5 sm:grid-cols-3 lg:grid-cols-5">
             {CATEGORY_META.map(({ apiValue, name, Icon, desc }) => {
               const count = categoryCounts[apiValue];
               return (
@@ -315,17 +338,17 @@ export default async function HomePage() {
       </section>
 
       {/* ── For Eventees ─────────────────────────────────────────────────── */}
-      <section className="bg-white py-28">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid items-center gap-16 lg:grid-cols-2">
+      <section className="bg-white py-12 sm:py-20 lg:py-28">
+        <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
             <div>
               <span className="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-600">
                 For attendees
               </span>
-              <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900">
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:mt-4 sm:text-4xl">
                 From discovery to door in minutes.
               </h2>
-              <p className="mt-4 text-lg text-slate-500">
+              <p className="mt-3 text-base text-slate-500 sm:mt-4 sm:text-lg">
                 No more lost printouts or screenshotted PDFs. Your signed QR ticket lives on your phone, ready to scan.
               </p>
               <div className="mt-10 space-y-8">
@@ -377,9 +400,9 @@ export default async function HomePage() {
       </section>
 
       {/* ── For Creators ─────────────────────────────────────────────────── */}
-      <section className="bg-brand-950 py-28">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid items-center gap-16 lg:grid-cols-2">
+      <section className="bg-brand-950 py-12 sm:py-20 lg:py-28">
+        <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
             {/* Creator dashboard mockup */}
             <div className="order-2 lg:order-1">
               <div className="rounded-2xl border border-white/10 bg-brand-900 p-6 shadow-2xl">
@@ -443,10 +466,10 @@ export default async function HomePage() {
               <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-white/60">
                 For creators
               </span>
-              <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-white">
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:mt-4 sm:text-4xl">
                 Sell out your next show. Track every seat.
               </h2>
-              <p className="mt-4 text-lg text-white/50">
+              <p className="mt-3 text-base text-white/50 sm:mt-4 sm:text-lg">
                 Create an event in minutes. Share a link. Watch tickets sell — and revenue land in your account automatically.
               </p>
               <div className="mt-10 space-y-8">
@@ -487,18 +510,18 @@ export default async function HomePage() {
       </section>
 
       {/* ── For Staff ────────────────────────────────────────────────────── */}
-      <section className="bg-white py-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="rounded-3xl bg-slate-50 px-8 py-16 lg:px-16">
-            <div className="grid items-center gap-12 lg:grid-cols-2">
+      <section className="bg-white py-12 sm:py-20 lg:py-24">
+        <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+          <div className="rounded-2xl bg-slate-50 px-5 py-10 sm:rounded-3xl sm:px-8 sm:py-16 lg:px-16">
+            <div className="grid items-center gap-10 sm:gap-12 lg:grid-cols-2">
               <div>
                 <span className="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-600">
                   For door staff
                 </span>
-                <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900">
+                <h2 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:mt-4 sm:text-3xl">
                   Run the door like a pro.
                 </h2>
-                <p className="mt-4 text-lg text-slate-500">
+                <p className="mt-3 text-base text-slate-500 sm:mt-4 sm:text-lg">
                   Scan QR codes instantly. Real-time validation — no app install needed.
                   Forged tickets are rejected automatically.
                 </p>
@@ -551,12 +574,12 @@ export default async function HomePage() {
       </section>
 
       {/* ── Trust & Security ─────────────────────────────────────────────── */}
-      <section className="border-t border-slate-100 bg-white py-20">
-        <div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="border-t border-slate-100 bg-white py-12 sm:py-20">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-8">
           <p className="mb-12 text-center text-xs font-bold uppercase tracking-widest text-slate-400">
             Built for trust at scale
           </p>
-          <div className="grid gap-10 sm:grid-cols-3">
+          <div className="grid gap-8 sm:gap-10 sm:grid-cols-3">
             {[
               {
                 Icon: ShieldCheckIcon,
@@ -589,26 +612,26 @@ export default async function HomePage() {
       </section>
 
       {/* ── Final CTA ────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-brand-950 py-24">
+      <section className="relative overflow-hidden bg-brand-950 py-14 sm:py-24">
         {/* Glow orbs */}
         <div className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 rounded-full bg-brand-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-brand-600/10 blur-3xl" />
 
-        <div className="relative mx-auto max-w-3xl px-6 text-center lg:px-8">
-          <h2 className="text-4xl font-extrabold tracking-tight text-white">
+        <div className="relative mx-auto max-w-3xl px-5 text-center sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Ready to make it happen?
           </h2>
-          <p className="mt-4 text-xl text-white/50">
+          <p className="mt-3 text-lg text-white/50 sm:mt-4 sm:text-xl">
             Whether you&apos;re discovering your next favourite night or selling out your next show — Eventful is built for you.
           </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link href="/events" className="rounded-full bg-brand-500 px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-brand-500/30 transition hover:bg-brand-400 hover:-translate-y-0.5">
+          <div className="mt-8 flex flex-col items-center gap-3 sm:mt-10 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
+            <Link href="/events" className="w-full rounded-full bg-brand-500 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-brand-500/30 transition hover:bg-brand-400 hover:-translate-y-0.5 sm:w-auto sm:text-base">
               Browse events
             </Link>
-            <Link href="/register" className="rounded-full border-2 border-white/20 bg-white/5 px-8 py-3.5 text-base font-bold text-white backdrop-blur-sm transition hover:bg-white/10 hover:-translate-y-0.5">
+            <Link href="/register" className="w-full rounded-full border-2 border-white/20 bg-white/5 px-8 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/10 hover:-translate-y-0.5 sm:w-auto sm:text-base">
               Create an account
             </Link>
-            <a href="mailto:enterprise@eventful.cm" className="rounded-full border border-white/10 px-8 py-3.5 text-base font-medium text-white/40 transition hover:text-white/70 hover:border-white/20">
+            <a href="mailto:enterprise@eventful.cm" className="w-full rounded-full border border-white/10 px-8 py-3.5 text-sm font-medium text-white/40 transition hover:text-white/70 hover:border-white/20 sm:w-auto sm:text-base">
               Talk to sales →
             </a>
           </div>
@@ -617,8 +640,8 @@ export default async function HomePage() {
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <footer className="bg-brand-950">
-        <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-6 sm:py-16 lg:px-8">
+          <div className="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {/* Brand */}
             <div className="col-span-full lg:col-span-1">
               <div className="flex items-center gap-2">

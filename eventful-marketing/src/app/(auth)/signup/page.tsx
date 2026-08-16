@@ -139,7 +139,7 @@ export default function SignupPage() {
           >
             {resendLoading ? 'Sending…' : 'resend the email'}
           </button>.
-          {resendMsg && <p className="mt-1 font-medium text-emerald-600">{resendMsg}</p>}
+          {resendMsg && <p className="mt-1 font-medium text-brand-600">{resendMsg}</p>}
         </div>
         <Link
           href="/login"

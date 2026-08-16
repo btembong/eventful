@@ -22,7 +22,7 @@ export default function TicketCard({
   className = '',
 }: TicketCardProps) {
   return (
-    <div className={`relative flex w-[420px] overflow-visible ${className}`}>
+    <div className={`relative flex w-full max-w-[420px] overflow-visible ${className}`}>
       {/* Notch left */}
       <div className={`absolute -left-3.5 top-1/2 z-10 h-7 w-7 -translate-y-1/2 rounded-full ${notchColor}`} />
       {/* Notch right */}

@@ -52,9 +52,9 @@ async function fetchEvents(category?: string, q?: string, page = 1): Promise<Api
 
 function availInfo(capacity: number, sold: number) {
   const remaining = capacity - sold;
-  if (remaining <= 0) return { text: 'Sold out', cls: 'bg-slate-100 text-slate-500',   dot: 'bg-slate-400' };
-  if (remaining < 20) return { text: `${remaining} left`, cls: 'bg-amber-50 text-amber-700', dot: 'bg-amber-400' };
-  return { text: 'Available', cls: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' };
+  if (remaining <= 0) return { text: 'Sold out',        cls: 'bg-slate-100 text-slate-500',    dot: 'bg-slate-400' };
+  if (remaining < 20) return { text: `${remaining} left`, cls: 'bg-brand-100 text-brand-700',  dot: 'bg-brand-500' };
+  return                     { text: 'Available',        cls: 'bg-brand-100 text-brand-600',   dot: 'bg-brand-400' };
 }
 
 function buildHref(
@@ -62,10 +62,10 @@ function buildHref(
   overrides: { category?: string | null; q?: string | null; page?: number },
 ): string {
   const p = new URLSearchParams();
-  const cat = overrides.category !== undefined ? overrides.category : base.category;
-  const query = overrides.q !== undefined ? overrides.q : base.q;
-  const pg = overrides.page ?? 1;
-  if (cat) p.set('category', cat);
+  const cat   = overrides.category !== undefined ? overrides.category : base.category;
+  const query = overrides.q       !== undefined ? overrides.q       : base.q;
+  const pg    = overrides.page ?? 1;
+  if (cat)   p.set('category', cat);
   if (query) p.set('q', query);
   if (pg > 1) p.set('page', String(pg));
   const qs = p.toString();
@@ -90,104 +90,71 @@ function EventCard({ event }: { event: Event }) {
       href={`/e/${event.shareSlug}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-brand-100 hover:shadow-lg"
     >
-      {/* Image / gradient header */}
-      <div className="relative h-44 overflow-hidden bg-brand-950">
+      {/* Image / gradient header — compact on mobile (h-28), full on desktop (h-44) */}
+      <div className="relative h-28 overflow-hidden bg-brand-950 sm:h-44">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.05]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '18px 18px' }}
         />
-        {catMeta && <catMeta.Icon className="pointer-events-none absolute right-4 bottom-4 h-20 w-20 text-white/[0.07]" />}
+        {catMeta && (
+          <catMeta.Icon className="pointer-events-none absolute right-3 bottom-3 h-14 w-14 text-white/[0.07] sm:right-4 sm:bottom-4 sm:h-20 sm:w-20" />
+        )}
 
-        {/* Date block — matches detail page design */}
-        <div className="absolute left-4 top-4 select-none leading-none">
-          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40">{weekday}</p>
-          <p className="text-[48px] font-black leading-none text-white">{dayNum}</p>
-          <p className="text-[9px] font-black uppercase tracking-[0.15em] text-white/50">{month}</p>
+        {/* Date block */}
+        <div className="absolute left-3 top-3 select-none leading-none sm:left-4 sm:top-4">
+          <p className="text-[7px] font-black uppercase tracking-[0.2em] text-white/40 sm:text-[8px]">{weekday}</p>
+          <p className="text-[32px] font-black leading-none text-white sm:text-[48px]">{dayNum}</p>
+          <p className="text-[8px] font-black uppercase tracking-[0.15em] text-white/50 sm:text-[9px]">{month}</p>
         </div>
 
         {/* Category badge */}
         {catMeta && (
-          <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 backdrop-blur-sm">
-            <catMeta.Icon className="h-3 w-3 text-brand-400" />
-            <span className="text-[10px] font-bold text-white/80">{catMeta.label}</span>
+          <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 backdrop-blur-sm sm:right-3 sm:top-3 sm:gap-1.5 sm:px-2.5 sm:py-1">
+            <catMeta.Icon className="h-2.5 w-2.5 text-brand-400 sm:h-3 sm:w-3" />
+            <span className="text-[9px] font-bold text-white/80 sm:text-[10px]">{catMeta.label}</span>
           </div>
         )}
 
-        {/* Price badge bottom-right */}
-        <div className={`absolute bottom-3 right-3 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${
-          isFree ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white backdrop-blur-sm'
+        {/* Price badge */}
+        <div className={`absolute bottom-2 right-2 rounded-full px-2 py-0.5 text-[9px] font-extrabold sm:bottom-3 sm:right-3 sm:px-2.5 sm:text-[10px] ${
+          isFree ? 'bg-brand-600 text-white' : 'bg-white/10 text-white backdrop-blur-sm'
         }`}>
           {isFree ? 'Free' : `${event.currency} ${Number(event.price).toLocaleString()}`}
         </div>
       </div>
 
       {/* Card body */}
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-2 font-slackey text-sm leading-snug text-slate-900 transition group-hover:text-brand-600">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <h3 className="line-clamp-2 font-slackey text-xs leading-snug text-slate-900 transition group-hover:text-brand-600 sm:text-sm">
           {event.title}
         </h3>
 
-        <div className="mt-2.5 space-y-1">
-          <p className="flex items-center gap-1.5 text-xs text-slate-500">
-            <MapPointIcon className="h-3 w-3 shrink-0 text-slate-400" />
-            <span className="truncate">{event.venue}</span>
-          </p>
-          <p className="flex items-center gap-1.5 text-xs text-slate-500">
-            <CalendarIcon className="h-3 w-3 shrink-0 text-slate-400" />
-            {weekday}, {dayNum} {month} · {timeStr}
-          </p>
-        </div>
+        {/* Venue — hidden on mobile to reduce height */}
+        <p className="mt-1.5 hidden items-center gap-1.5 text-xs text-slate-500 sm:flex">
+          <MapPointIcon className="h-3 w-3 shrink-0 text-slate-400" />
+          <span className="truncate">{event.venue}</span>
+        </p>
 
-        <div className="mt-3 flex items-center justify-between">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${avail.cls}`}>
+        {/* Date + time — always show */}
+        <p className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-500 sm:gap-1.5 sm:text-xs">
+          <CalendarIcon className="h-2.5 w-2.5 shrink-0 text-slate-400 sm:h-3 sm:w-3" />
+          <span className="truncate">{dayNum} {month} · {timeStr}</span>
+        </p>
+
+        {/* Availability */}
+        <div className="mt-2 sm:mt-3">
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold sm:px-2.5 sm:py-1 sm:text-[10px] ${avail.cls}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${avail.dot}`} />
             {avail.text}
           </span>
         </div>
 
-        {/* Border-only CTA */}
-        <div className="mt-3 w-full rounded-xl border border-brand-200 py-2.5 text-center text-xs font-bold text-brand-600 transition group-hover:border-brand-500 group-hover:bg-brand-50">
+        {/* CTA */}
+        <div className="mt-2 w-full rounded-xl border border-brand-200 py-2 text-center text-[10px] font-bold text-brand-600 transition group-hover:border-brand-500 group-hover:bg-brand-50 sm:mt-3 sm:py-2.5 sm:text-xs">
           Get tickets
         </div>
       </div>
     </Link>
-  );
-}
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
-
-function EmptyState({ category, q }: { category?: string; q?: string }) {
-  return (
-    <div className="col-span-full flex flex-col items-center justify-center py-28 text-center">
-      <div className="relative mb-6 flex h-28 w-28 items-center justify-center">
-        <div className="absolute inset-0 rounded-[28px] bg-brand-50" />
-        {/* Duotone icon: outer shape brand-600, inner shadow slate-900 */}
-        <svg viewBox="0 0 48 48" className="relative h-16 w-16">
-          <rect x="2" y="10" width="44" height="28" rx="6" fill="#F07200" opacity="0.15" />
-          <rect x="2" y="10" width="44" height="28" rx="6" fill="none" stroke="#F07200" strokeWidth="2.5" />
-          <circle cx="10" cy="24" r="4" fill="#333333" />
-          <circle cx="38" cy="24" r="4" fill="#333333" />
-          <rect x="14" y="18" width="20" height="12" rx="3" fill="#F07200" />
-          <line x1="14" y1="18" x2="14" y2="30" stroke="#333333" strokeWidth="1.5" strokeDasharray="3,2" />
-          <line x1="34" y1="18" x2="34" y2="30" stroke="#333333" strokeWidth="1.5" strokeDasharray="3,2" />
-        </svg>
-      </div>
-      <h3 className="text-xl font-extrabold text-slate-900">No events found</h3>
-      <p className="mt-2 max-w-sm text-sm text-slate-500">
-        {q
-          ? `No events match "${q}"`
-          : category
-          ? `No ${category.toLowerCase()} events right now`
-          : 'No events available at the moment'}
-        {' '}— check back soon.
-      </p>
-      <Link
-        href="/events"
-        className="mt-6 rounded-full border-2 border-brand-200 px-6 py-2.5 text-sm font-bold text-brand-600 transition hover:border-brand-500 hover:bg-brand-50"
-      >
-        Clear filters
-      </Link>
-    </div>
   );
 }
 
@@ -204,7 +171,6 @@ export default async function EventsPage({ searchParams }: Props) {
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const base       = { category, q, page };
 
-  // Visible page numbers (up to 5 around current)
   const pagesToShow: number[] = [];
   const start = Math.max(1, page - 2);
   const end   = Math.min(totalPages, start + 4);
@@ -214,105 +180,174 @@ export default async function EventsPage({ searchParams }: Props) {
     <div className="flex min-h-screen flex-col bg-slate-50">
       <Navbar />
 
-      {/* ── Filter bar ──────────────────────────────────────────────────────── */}
-      <div className="border-b border-slate-100 bg-white pt-20">
-        <div className="mx-auto max-w-7xl px-6 py-5 lg:px-8">
+      {/* ── Sticky filter bar ────────────────────────────────────────────── */}
+      {/*   pt-14 clears the fixed navbar. sticky top-14 pins the bar       */}
+      {/*   right below the navbar as the user scrolls.                      */}
+      <div className="sticky top-14 z-30 border-b border-slate-100 bg-white shadow-sm pt-[56px] -mt-[56px]">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
 
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
-            {/* Tab-style category filter */}
-            <div className="flex items-center gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
+          {/* Row 1: category chips (horizontal scroll) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <Link
+              href={buildHref(base, { category: null, page: 1 })}
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition ${
+                !category
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              All
+            </Link>
+            {CATEGORIES.map(({ value, label, Icon }) => (
               <Link
-                href={buildHref(base, { category: null, page: 1 })}
-                className={`shrink-0 rounded-lg px-4 py-2 text-xs font-bold whitespace-nowrap transition ${
-                  !category ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                key={value}
+                href={buildHref(base, { category: value, page: 1 })}
+                className={`shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold whitespace-nowrap transition ${
+                  category === value
+                    ? 'bg-brand-600 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                All events
+                <Icon className={`h-3 w-3 ${category === value ? 'text-white' : 'text-slate-400'}`} />
+                {label}
               </Link>
-              {CATEGORIES.map(({ value, label, Icon }) => (
-                <Link
-                  key={value}
-                  href={buildHref(base, { category: value, page: 1 })}
-                  className={`shrink-0 flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold whitespace-nowrap transition ${
-                    category === value
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  <Icon className={`h-3.5 w-3.5 ${category === value ? 'text-brand-600' : 'text-slate-400'}`} />
-                  {label}
-                </Link>
-              ))}
-            </div>
+            ))}
+          </div>
 
-            {/* Search row */}
-            <form method="GET" action="/events" className="flex shrink-0 items-center gap-2">
+          {/* Row 2: search + result count */}
+          <div className="mt-3 flex items-center gap-2">
+            <form method="GET" action="/events" className="flex flex-1 items-center gap-2">
               {category && <input type="hidden" name="category" value={category} />}
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-none">
                 <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   name="q"
                   type="search"
                   defaultValue={q ?? ''}
                   placeholder="Search events…"
-                  className="w-52 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 sm:w-52"
                 />
               </div>
               <button
                 type="submit"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-600"
+                className="shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-600"
               >
-                Search
+                Go
               </button>
               {(category || q) && (
                 <Link
                   href="/events"
-                  className="flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:border-red-200 hover:text-red-500"
+                  className="flex shrink-0 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:border-brand-200 hover:text-brand-600"
                 >
                   <XIcon className="h-3.5 w-3.5" />
-                  Clear
+                  <span className="hidden sm:inline">Clear</span>
                 </Link>
               )}
             </form>
-          </div>
 
-          <p className="mt-3 text-xs text-slate-400">
-            {total > 0
-              ? `${total.toLocaleString()} event${total === 1 ? '' : 's'} found`
-              : "Discover what's happening near you"}
-            {totalPages > 1 && ` · Page ${page} of ${totalPages}`}
-          </p>
+            {/* Count — right-aligned */}
+            <p className="shrink-0 text-xs text-slate-400">
+              {total > 0 ? (
+                <span><span className="font-semibold text-slate-700">{total.toLocaleString()}</span> found</span>
+              ) : 'No events'}
+              {totalPages > 1 && <span className="hidden sm:inline"> · p{page}/{totalPages}</span>}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* ── Grid ─────────────────────────────────────────────────────────────── */}
-      <section className="flex-1 py-8">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {/* ── Main layout — sidebar on desktop, full-width on mobile ───────── */}
+      <div className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:flex lg:gap-8 lg:px-8">
+
+        {/* Desktop category sidebar — sticky, always visible, no tab bar needed */}
+        <aside className="hidden lg:block lg:w-44 lg:shrink-0">
+          <div className="sticky top-[120px] py-8">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">Categories</p>
+            <nav className="space-y-0.5">
+              <Link
+                href={buildHref(base, { category: null, page: 1 })}
+                className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                  !category ? 'bg-brand-50 text-brand-600' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <TicketIcon className={`h-4 w-4 shrink-0 ${!category ? 'text-brand-500' : 'text-slate-400'}`} />
+                All events
+                {!category && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-500" />}
+              </Link>
+              {CATEGORIES.map(({ value, label, Icon }) => {
+                const active = category === value;
+                return (
+                  <Link
+                    key={value}
+                    href={buildHref(base, { category: value, page: 1 })}
+                    className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                      active ? 'bg-brand-50 text-brand-600' : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-brand-500' : 'text-slate-400'}`} />
+                    {label}
+                    {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-500" />}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </aside>
+
+        {/* Event grid */}
+        <section className="min-w-0 flex-1 py-6 sm:py-8">
+          {/* 2-col on mobile, 2-col on sm, 3-col on lg (inside sidebar layout), 4-col on xl */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {events.length > 0
               ? events.map((event) => <EventCard key={event.id} event={event} />)
-              : <EmptyState category={category} q={q} />}
+              : (
+                <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
+                  <div className="relative mb-5 flex h-24 w-24 items-center justify-center">
+                    <div className="absolute inset-0 rounded-[24px] bg-brand-50" />
+                    <svg viewBox="0 0 48 48" className="relative h-14 w-14">
+                      <rect x="2" y="10" width="44" height="28" rx="6" fill="#F07200" opacity="0.15" />
+                      <rect x="2" y="10" width="44" height="28" rx="6" fill="none" stroke="#F07200" strokeWidth="2.5" />
+                      <circle cx="10" cy="24" r="4" fill="#333333" />
+                      <circle cx="38" cy="24" r="4" fill="#333333" />
+                      <rect x="14" y="18" width="20" height="12" rx="3" fill="#F07200" />
+                      <line x1="14" y1="18" x2="14" y2="30" stroke="#333333" strokeWidth="1.5" strokeDasharray="3,2" />
+                      <line x1="34" y1="18" x2="34" y2="30" stroke="#333333" strokeWidth="1.5" strokeDasharray="3,2" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-slate-900">No events found</h3>
+                  <p className="mt-2 max-w-sm text-sm text-slate-500">
+                    {q
+                      ? `No events match "${q}"`
+                      : category
+                      ? `No ${category.toLowerCase()} events right now`
+                      : 'No events available at the moment'}
+                    {' '}— check back soon.
+                  </p>
+                  <Link
+                    href="/events"
+                    className="mt-5 rounded-full border-2 border-brand-200 px-6 py-2.5 text-sm font-bold text-brand-600 transition hover:border-brand-500 hover:bg-brand-50"
+                  >
+                    Clear filters
+                  </Link>
+                </div>
+              )
+            }
           </div>
 
-          {/* Pagination */}
+          {/* ── Pagination ──────────────────────────────────────────────── */}
           {totalPages > 1 && (
-            <div className="mt-10 flex items-center justify-center gap-1.5">
-              {/* Prev */}
+            <div className="mt-8 flex items-center justify-center gap-1.5">
               {page > 1 ? (
                 <Link
                   href={buildHref(base, { page: page - 1 })}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-600"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-600 sm:px-4"
                 >
-                  ← Prev
+                  ← <span className="hidden sm:inline">Prev</span>
                 </Link>
               ) : (
-                <span className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-300">
-                  ← Prev
-                </span>
+                <span className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-300 sm:px-4">←</span>
               )}
 
-              {/* Page numbers */}
               {start > 1 && (
                 <>
                   <Link href={buildHref(base, { page: 1 })}
@@ -322,6 +357,7 @@ export default async function EventsPage({ searchParams }: Props) {
                   {start > 2 && <span className="px-1 text-slate-400">…</span>}
                 </>
               )}
+
               {pagesToShow.map((pg) => (
                 <Link
                   key={pg}
@@ -335,6 +371,7 @@ export default async function EventsPage({ searchParams }: Props) {
                   {pg}
                 </Link>
               ))}
+
               {end < totalPages && (
                 <>
                   {end < totalPages - 1 && <span className="px-1 text-slate-400">…</span>}
@@ -345,27 +382,24 @@ export default async function EventsPage({ searchParams }: Props) {
                 </>
               )}
 
-              {/* Next */}
               {page < totalPages ? (
                 <Link
                   href={buildHref(base, { page: page + 1 })}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-600"
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-600 sm:px-4"
                 >
-                  Next →
+                  <span className="hidden sm:inline">Next</span> →
                 </Link>
               ) : (
-                <span className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 text-sm font-bold text-slate-300">
-                  Next →
-                </span>
+                <span className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-300 sm:px-4">→</span>
               )}
             </div>
           )}
-        </div>
-      </section>
+        </section>
+      </div>
 
-      {/* ── Footer ───────────────────────────────────────────────────────────── */}
+      {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <footer className="bg-brand-950 py-8">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500">

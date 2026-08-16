@@ -27,18 +27,88 @@
     --input:        214.3 31.8% 91.4%;
     --ring:         29 100% 47%;
     --radius:       0.75rem;
+
+    /* Bottom tab bar height — used for content offset */
+    --tab-bar-height: 4rem;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Use dynamic viewport height so iOS address bar is handled */
+    height: 100%;
   }
 
   body {
     @apply bg-white text-gray-900 antialiased;
+    /* Remove the blue flash on tap (iOS/Android) */
+    -webkit-tap-highlight-color: transparent;
+    /* Smooth font rendering on mobile */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent horizontal scroll from overflowing children */
+    overflow-x: hidden;
+  }
+
+  /* Ensure touch targets are always large enough */
+  button, a {
+    touch-action: manipulation;
+  }
+
+  /* Scrollable elements on iOS scroll with momentum */
+  .overflow-y-auto,
+  .overflow-y-scroll {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
-/* Ticket-stub perforated edge — reusable utility */
+/* ── Reusable component utilities ─────────────────────────────────────────── */
+
 @layer components {
+  /* Ticket-stub perforated edge */
   .ticket-perforation {
     background-image: radial-gradient(circle, transparent 6px, theme('colors.white') 6px);
     background-size: 18px 18px;
     background-position: 0 50%;
+  }
+
+  /* Landing page dot grid */
+  .hero-grid {
+    background-image: radial-gradient(circle, rgba(240, 114, 0, 0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Orange gradient text (hero headline) */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent;
+  }
+
+  /* Primary CTA button */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-full bg-brand-600 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition hover:bg-brand-500 hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  /* Safe-area-aware bottom padding for content behind tab bar */
+  .pb-tab-safe {
+    padding-bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── Slide-in animation for mobile nav drawer ─────────────────────────────── */
+
+@layer utilities {
+  .slide-in-right {
+    animation: slideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+  }
+
+  /* Prevent scroll on body when overlay is open */
+  .overflow-locked {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
   }
 }
