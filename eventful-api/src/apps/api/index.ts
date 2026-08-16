@@ -21,7 +21,8 @@ async function buildApp() {
   // ── Plugins ────────────────────────────────────────────────────────────────
 
   await app.register(import('@fastify/cors'), {
-    origin: env.NODE_ENV === 'production' ? env.APP_BASE_URL : true,
+    origin: true,
+    credentials: true,
   });
 
   await app.register(import('@fastify/swagger'), {
