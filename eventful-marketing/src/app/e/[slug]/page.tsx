@@ -288,11 +288,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = `${event.venue} · ${fmtDate(event.startsAt)} · ${
     Number(event.price) === 0 ? 'Free' : `${event.currency} ${Number(event.price).toLocaleString()}`
   }`;
+  // opengraph-image.tsx in this directory is auto-served at this path by Next.js
+  const ogImage = `/e/${slug}/opengraph-image`;
   return {
     title: `${event.title} — Eventful`,
     description,
-    openGraph: { type: 'website', title: event.title, description },
-    twitter: { card: 'summary_large_image', title: event.title, description },
+    openGraph: {
+      type:        'website',
+      siteName:    'Eventful',
+      title:       event.title,
+      description,
+      url:         `/e/${slug}`,
+      images:      [{ url: ogImage, width: 1200, height: 630, alt: event.title }],
+    },
+    twitter: {
+      card:        'summary_large_image',
+      title:       event.title,
+      description,
+      images:      [ogImage],
+    },
   };
 }
 

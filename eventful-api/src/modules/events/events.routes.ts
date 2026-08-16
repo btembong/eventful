@@ -31,7 +31,7 @@ export default async function eventsRoutes(app: FastifyInstance) {
 
   // GET /events — discovery feed (cached 60s)
   app.get<{
-    Querystring: { category?: string; from?: string; to?: string; page?: number; limit?: number };
+    Querystring: { category?: string; from?: string; to?: string; q?: string; page?: number; limit?: number };
   }>('/', {
     schema: {
       tags: ['Events'],
@@ -42,6 +42,7 @@ export default async function eventsRoutes(app: FastifyInstance) {
           category: { type: 'string', enum: ['CONCERT', 'THEATER', 'SPORTS', 'CULTURAL', 'OTHER'] },
           from: { type: 'string', description: 'ISO date lower bound on startsAt' },
           to:   { type: 'string', description: 'ISO date upper bound on startsAt' },
+          q:    { type: 'string', description: 'Full-text search on event title and venue' },
           ...paginationQuery,
         },
       },

@@ -147,12 +147,13 @@ export const eventsService = {
   },
 
   async getDiscoveryFeed(filters: DiscoveryFilters) {
-    const { category, from, to, page = 1, limit = 20 } = filters;
+    const { category, from, to, q, page = 1, limit = 20 } = filters;
     const cacheKey = discoveryKey(
       crypto.createHash('sha1').update(JSON.stringify(filters)).digest('hex'),
     );
 
-    const cached = await redis.get(cacheKey);
+    // Skip cache for search queries — results must be fresh
+    const cached = q ? null : await redis.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
     const where = {
@@ -162,6 +163,12 @@ export const eventsService = {
       ...(from || to
         ? { startsAt: { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(to) } : {}) } }
         : {}),
+      ...(q ? {
+        OR: [
+          { title: { contains: q, mode: 'insensitive' as const } },
+          { venue: { contains: q, mode: 'insensitive' as const } },
+        ],
+      } : {}),
     };
 
     const [events, total] = await Promise.all([

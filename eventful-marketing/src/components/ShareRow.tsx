@@ -12,7 +12,10 @@ export default function ShareRow({ slug, title }: Props) {
   const [copied, setCopied] = useState(false);
 
   function getUrl() {
-    if (typeof window === 'undefined') return `/e/${slug}`;
+    // Always return an absolute URL — needed for WhatsApp to crawl OG tags
+    if (typeof window === 'undefined') {
+      return `https://eventful-livid.vercel.app/e/${slug}`;
+    }
     return `${window.location.origin}/e/${slug}`;
   }
 
@@ -22,7 +25,8 @@ export default function ShareRow({ slug, title }: Props) {
     setTimeout(() => setCopied(false), 2200);
   }
 
-  const waHref = `https://wa.me/?text=${encodeURIComponent(`${title}\n`)}`;
+  // Include full URL so WhatsApp crawler fetches the page and renders the OG preview card
+  const waHref = `https://wa.me/?text=${encodeURIComponent(`${title}\n${getUrl()}`)}`;
 
   return (
     <div>

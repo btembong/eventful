@@ -55,6 +55,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('access_token',  accessToken);
     localStorage.setItem('refresh_token', refreshToken);
     localStorage.setItem('user',          JSON.stringify(newUser));
+    // Mirror tokens in cookies so Next.js middleware can validate auth server-side.
+    // refresh_token uses 30d TTL (matches JWT_REFRESH_TTL); access_token uses 15 min.
+    document.cookie = `access_token=${accessToken}; path=/; max-age=${15 * 60}; SameSite=Lax`;
+    document.cookie = `refresh_token=${refreshToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
     setUser(newUser);
     setToken(accessToken);
   }, []);
@@ -72,6 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       const newToken = data.accessToken as string;
       localStorage.setItem('access_token', newToken);
+      // Refresh the access_token cookie too
+      document.cookie = `access_token=${newToken}; path=/; max-age=${15 * 60}; SameSite=Lax`;
       setToken(newToken);
       return newToken;
     } catch {
@@ -92,6 +98,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    // Expire cookies immediately
+    document.cookie = 'access_token=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = 'refresh_token=; path=/; max-age=0; SameSite=Lax';
     setUser(null);
     setToken(null);
     router.push('/login');
