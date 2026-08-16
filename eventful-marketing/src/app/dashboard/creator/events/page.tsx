@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { CalendarIcon, PlusIcon, MapPointIcon, SearchIcon } from '@/components/icons';
 import { useApiFetch } from '@/contexts/auth-context';
 
@@ -136,6 +136,14 @@ function EventCard({ ev }: { ev: EventRow }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CreatorEventsPage() {
+  return (
+    <Suspense>
+      <CreatorEventsContent />
+    </Suspense>
+  );
+}
+
+function CreatorEventsContent() {
   const apiFetch     = useApiFetch();
   const searchParams = useSearchParams();
   const router       = useRouter();

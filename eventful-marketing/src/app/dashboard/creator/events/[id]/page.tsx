@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect, useRef } from 'react';
+import { use, useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -1873,6 +1873,14 @@ function TabSettings({ event, onRefresh }: { event: EventDetail; onRefresh: () =
 interface Props { params: Promise<{ id: string }> }
 
 export default function CreatorEventDetail({ params }: Props) {
+  return (
+    <Suspense>
+      <CreatorEventDetailContent params={params} />
+    </Suspense>
+  );
+}
+
+function CreatorEventDetailContent({ params }: Props) {
   const { id }       = use(params);
   const searchParams = useSearchParams();
   const router       = useRouter();
