@@ -4,7 +4,7 @@ services:
     name: eventful-api
     runtime: node
     plan: free
-    region: frankfurt
+    region: oregon
     rootDir: eventful-api
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
@@ -57,7 +57,7 @@ services:
     name: eventful-worker
     runtime: node
     plan: free
-    region: frankfurt
+    region: oregon
     rootDir: eventful-api
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run worker
