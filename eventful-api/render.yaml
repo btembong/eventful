@@ -5,6 +5,7 @@ services:
     runtime: node
     plan: free
     region: frankfurt
+    rootDir: eventful-api
     buildCommand: npm ci && npm run build && npm run migrate:deploy
     startCommand: npm start
     healthCheckPath: /health
@@ -57,6 +58,7 @@ services:
     runtime: node
     plan: free
     region: frankfurt
+    rootDir: eventful-api
     buildCommand: npm ci && npm run build
     startCommand: npm run worker
     envVars:
