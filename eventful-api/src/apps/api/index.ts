@@ -116,6 +116,23 @@ async function buildApp() {
   return app;
 }
 
+async function startWorkers(log: { info: (msg: string) => void }) {
+  // Workers run inline in the API process when no separate worker service is available.
+  // Dynamic imports keep startup non-blocking and prevent test environments from
+  // loading worker modules (which use the real redis/bullmq).
+  try {
+    await Promise.all([
+      import('@/workers/reminder.worker'),
+      import('@/workers/receipt.worker'),
+      import('@/workers/webhook-delivery.worker'),
+      import('@/workers/broadcast.worker'),
+    ]);
+    log.info('[api] BullMQ workers started inline');
+  } catch (err) {
+    log.info(`[api] Failed to start inline workers: ${(err as Error).message}`);
+  }
+}
+
 async function start() {
   const app = await buildApp();
   try {
@@ -125,6 +142,9 @@ async function start() {
     app.log.error(err);
     process.exit(1);
   }
+
+  // Start BullMQ workers in-process (no separate worker dyno on free plan)
+  await startWorkers(app.log);
 
   // ── Graceful shutdown ────────────────────────────────────────────────────
   const shutdown = async (signal: string) => {

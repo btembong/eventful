@@ -40,11 +40,13 @@ services:
       - key: BREVO_API_KEY
         sync: false
       - key: BREVO_SENDER_EMAIL
-        value: noreply@eventful.app
+        sync: false           # set to your Brevo verified sender email
       - key: BREVO_SENDER_NAME
-        value: Eventful
+        sync: false           # display name shown in emails e.g. UseEventful
       - key: APP_BASE_URL
         sync: false           # set to your Vercel URL e.g. https://eventful.vercel.app
+      - key: PLATFORM_FEE_PCT
+        value: "5"            # platform fee percentage (default 5%)
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -80,9 +82,9 @@ services:
       - key: BREVO_API_KEY
         sync: false
       - key: BREVO_SENDER_EMAIL
-        value: noreply@eventful.app
+        value: ndanwemarcel@gmail.com
       - key: BREVO_SENDER_NAME
-        value: Eventful
+        value: UseEventful
       - key: APP_BASE_URL
         sync: false
       - key: TRANZAK_APP_ID
