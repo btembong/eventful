@@ -81,6 +81,7 @@ async function buildApp() {
     await v1.register(import('@/modules/auth/mfa.routes'), { prefix: '/auth' });
     await v1.register(import('@/modules/events/events.routes'), { prefix: '/events' });
     await v1.register(import('@/modules/events/tiers.routes'), { prefix: '/events' });
+    await v1.register(import('@/modules/events/seats.routes'), { prefix: '/events' });
     await v1.register(import('@/modules/events/event-members.routes'), { prefix: '/events' });
     await v1.register(import('@/modules/events/discount-validate.routes'), { prefix: '/events' });
     await v1.register(import('@/modules/creators/creators.routes'), { prefix: '/creators' });

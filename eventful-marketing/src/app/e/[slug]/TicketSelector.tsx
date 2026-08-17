@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ClockIcon, StarIcon, UsersGroupIcon, CheckCircleIcon,
@@ -23,9 +23,13 @@ export interface SelectableTier {
   perks: string[];
   salesStart: string | null;
   salesEnd: string | null;
+  hasSeating?: boolean;
+  seatRows?: number;
+  seatCols?: number;
 }
 
 interface Props {
+  eventId: string;
   shareSlug: string;
   tiers: SelectableTier[];
   coverImageUrl?: string;
@@ -101,48 +105,44 @@ const KIND_CONFIG: Record<TierKind, KindConfig> = {
 
 // ─── Seat map ─────────────────────────────────────────────────────────────────
 
-const ROWS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-const SECTIONS = [3, 7, 3]; // seats per section (left | center | right)
-const SEATS_PER_ROW = SECTIONS.reduce((a, b) => a + b, 0);
-
-function buildAllSeats(): string[] {
-  const seats: string[] = [];
-  for (const row of ROWS) {
-    for (let col = 1; col <= SEATS_PER_ROW; col++) seats.push(`${row}${col}`);
-  }
-  return seats;
-}
-
-function getSoldSeats(sold: number, all: string[]): Set<string> {
-  const set = new Set<string>();
-  if (sold <= 0) return set;
-  const prime = 17;
-  let idx = 5;
-  for (let i = 0; i < Math.min(sold, all.length); i++) {
-    set.add(all[idx % all.length]);
-    idx += prime;
-  }
-  return set;
-}
+type ApiSeatStatus = 'available' | 'held' | 'pending' | 'taken' | 'blocked';
 
 function SeatMap({
   tier,
   selected,
   onToggle,
   maxSeats,
+  seatStatuses,
+  loading,
 }: {
   tier: SelectableTier;
   selected: Set<string>;
   onToggle: (seat: string) => void;
   maxSeats: number;
+  seatStatuses: Record<string, ApiSeatStatus>;
+  loading: boolean;
 }) {
-  const allSeats  = useMemo(buildAllSeats, []);
-  const soldSeats = useMemo(() => getSoldSeats(tier.sold, allSeats), [tier.sold, allSeats]);
+  const rows = tier.seatRows ?? 8;
+  const cols = tier.seatCols ?? 13;
+
+  const rowLetters = useMemo(
+    () => Array.from({ length: rows }, (_, i) => String.fromCharCode(65 + i)),
+    [rows],
+  );
 
   function handleClick(seat: string) {
-    if (soldSeats.has(seat)) return;
+    const status = seatStatuses[seat] ?? 'available';
+    if (status !== 'available') return;
     if (!selected.has(seat) && selected.size >= maxSeats) return;
     onToggle(seat);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-32 items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 text-xs text-slate-400">
+        Loading seat map…
+      </div>
+    );
   }
 
   return (
@@ -171,55 +171,42 @@ function SeatMap({
 
       {/* Rows */}
       <div className="space-y-1.5 overflow-x-auto pb-1">
-        {ROWS.map((row) => {
+        {rowLetters.map((row) => {
           const isPremium = row <= 'C';
-          let colIdx = 1;
           return (
-            <div key={row} className="flex min-w-0 items-center gap-1">
-              {/* Row label */}
-              <span className={`w-4 shrink-0 text-center text-[9px] font-black ${
-                isPremium ? 'text-brand-500' : 'text-slate-300'
-              }`}>
+            <div key={row} className="flex min-w-0 items-center gap-0.5">
+              <span className={`w-4 shrink-0 text-center text-[9px] font-black ${isPremium ? 'text-brand-500' : 'text-slate-300'}`}>
                 {row}
               </span>
+              {Array.from({ length: cols }, (_, c) => {
+                const seatId = `${row}${c + 1}`;
+                const status: ApiSeatStatus = seatStatuses[seatId] ?? 'available';
+                const unavail = status !== 'available';
+                const chosen  = selected.has(seatId);
+                const maxed   = !chosen && selected.size >= maxSeats;
 
-              {/* Sections with aisle gaps */}
-              {SECTIONS.map((count, si) => {
-                const sectionStart = colIdx;
-                colIdx += count;
                 return (
-                  <div key={si} className={`flex gap-0.5 ${si === 1 ? 'mx-1.5' : ''}`}>
-                    {Array.from({ length: count }, (_, i) => {
-                      const seatId  = `${row}${sectionStart + i}`;
-                      const sold    = soldSeats.has(seatId);
-                      const chosen  = selected.has(seatId);
-                      const maxed   = !chosen && selected.size >= maxSeats;
-
-                      return (
-                        <button
-                          key={seatId}
-                          type="button"
-                          title={sold ? 'Taken' : chosen ? `Remove ${seatId}` : `Select ${seatId}`}
-                          disabled={sold || maxed}
-                          onClick={() => handleClick(seatId)}
-                          className={[
-                            'h-6 w-6 rounded-sm text-[7px] font-bold transition-all duration-150',
-                            sold
-                              ? 'cursor-not-allowed bg-slate-200 text-slate-300'
-                              : chosen
-                              ? 'scale-110 bg-brand-600 text-white shadow-sm ring-2 ring-brand-400'
-                              : isPremium
-                              ? 'cursor-pointer bg-brand-100 text-brand-500 ring-1 ring-brand-200 hover:bg-brand-200'
-                              : maxed
-                              ? 'cursor-not-allowed bg-slate-100 opacity-40'
-                              : 'cursor-pointer bg-white text-slate-400 ring-1 ring-slate-200 hover:bg-brand-50 hover:text-brand-600',
-                          ].join(' ')}
-                        >
-                          {sectionStart + i}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <button
+                    key={seatId}
+                    type="button"
+                    title={unavail ? status : chosen ? `Remove ${seatId}` : `Select ${seatId}`}
+                    disabled={unavail || (maxed && !chosen)}
+                    onClick={() => handleClick(seatId)}
+                    className={[
+                      'h-6 w-6 rounded-sm text-[7px] font-bold transition-all duration-150',
+                      chosen
+                        ? 'scale-110 bg-brand-600 text-white shadow-sm ring-2 ring-brand-400'
+                        : status === 'taken'  ? 'cursor-not-allowed bg-slate-300 text-slate-400'
+                        : status === 'held'   ? 'cursor-not-allowed bg-amber-200 text-amber-500'
+                        : status === 'pending'? 'cursor-not-allowed bg-blue-100 text-blue-400'
+                        : status === 'blocked'? 'cursor-not-allowed bg-red-100 text-red-300'
+                        : isPremium && !maxed ? 'cursor-pointer bg-brand-100 text-brand-500 ring-1 ring-brand-200 hover:bg-brand-200'
+                        : maxed               ? 'cursor-not-allowed bg-slate-100 opacity-40'
+                        :                      'cursor-pointer bg-white text-slate-400 ring-1 ring-slate-200 hover:bg-brand-50 hover:text-brand-600',
+                    ].join(' ')}
+                  >
+                    {c + 1}
+                  </button>
                 );
               })}
             </div>
@@ -233,7 +220,8 @@ function SeatMap({
           { cls: 'bg-brand-100 ring-1 ring-brand-200', label: 'Premium (A–C)' },
           { cls: 'bg-white ring-1 ring-slate-200',      label: 'Available' },
           { cls: 'bg-brand-600',                        label: 'Your pick' },
-          { cls: 'bg-slate-200',                        label: 'Taken' },
+          { cls: 'bg-slate-300',                        label: 'Taken' },
+          { cls: 'bg-amber-200',                        label: 'Held' },
         ].map(({ cls, label }) => (
           <div key={label} className="flex items-center gap-1.5">
             <div className={`h-3.5 w-3.5 shrink-0 rounded-sm ${cls}`} />
@@ -258,7 +246,7 @@ const EXPLAINER: { Icon: React.FC<{ className?: string }>; name: string; desc: s
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function TicketSelector({ shareSlug, tiers, coverImageUrl, hasSeating }: Props) {
+export default function TicketSelector({ eventId, shareSlug, tiers, coverImageUrl, hasSeating }: Props) {
   const router = useRouter();
 
   const [selectedTierId, setSelectedTierId] = useState<string | null>(
@@ -267,7 +255,10 @@ export default function TicketSelector({ shareSlug, tiers, coverImageUrl, hasSea
   const [quantities, setQuantities] = useState<Record<string, number>>(
     Object.fromEntries(tiers.map((t) => [t.id, 1])),
   );
-  const [selectedSeats, setSelectedSeats] = useState<Set<string>>(new Set());
+  const [selectedSeats,  setSelectedSeats]  = useState<Set<string>>(new Set());
+  const [seatStatuses,   setSeatStatuses]   = useState<Record<string, ApiSeatStatus>>({});
+  const [loadingSeats,   setLoadingSeats]   = useState(false);
+  const [reserving,      setReserving]      = useState(false);
 
   const selectedTier = tiers.find((t) => t.id === selectedTierId) ?? null;
   const qty = selectedTierId ? (quantities[selectedTierId] ?? 1) : 1;
@@ -275,10 +266,33 @@ export default function TicketSelector({ shareSlug, tiers, coverImageUrl, hasSea
     ? Math.min(selectedTier.orderLimit || 10, selectedTier.capacity - selectedTier.sold)
     : 1;
 
+  const needsSeats = !!(selectedTier?.hasSeating || (hasSeating && selectedTier && selectedTier.type !== 'INVITE_ONLY'));
+
+  const fetchSeatMap = useCallback(async (tierId: string) => {
+    setLoadingSeats(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}/tiers/${tierId}/seats`);
+      if (!res.ok) return;
+      const data = await res.json() as { seats: Record<string, ApiSeatStatus> };
+      setSeatStatuses(data.seats ?? {});
+    } catch { /* ignore */ } finally {
+      setLoadingSeats(false);
+    }
+  }, [eventId]);
+
+  useEffect(() => {
+    if (needsSeats && selectedTierId) {
+      fetchSeatMap(selectedTierId);
+    } else {
+      setSeatStatuses({});
+    }
+  }, [needsSeats, selectedTierId, fetchSeatMap]);
+
   function handleSelectTier(id: string) {
     if (id === selectedTierId) return;
     setSelectedTierId(id);
     setSelectedSeats(new Set());
+    setSeatStatuses({});
   }
 
   function adjustQty(tierId: string, delta: number) {
@@ -297,16 +311,37 @@ export default function TicketSelector({ shareSlug, tiers, coverImageUrl, hasSea
     });
   }
 
-  const needsSeats  = hasSeating && !!selectedTier && selectedTier.type !== 'INVITE_ONLY';
   const seatsReady  = !needsSeats || selectedSeats.size === qty;
-  const canCheckout = !!selectedTier && selectedTier.type !== 'INVITE_ONLY' && seatsReady;
+  const canCheckout = !!selectedTier && selectedTier.type !== 'INVITE_ONLY' && seatsReady && !reserving;
   const totalPrice  = selectedTier?.type === 'PAID' ? Number(selectedTier.price) * qty : 0;
 
-  function handleGetTickets() {
+  async function handleGetTickets() {
     if (!selectedTier) return;
-    const p = new URLSearchParams({ tier: selectedTier.id, qty: String(qty) });
-    if (needsSeats && selectedSeats.size > 0) p.set('seats', [...selectedSeats].sort().join(','));
-    router.push(`/e/${shareSlug}/checkout?${p.toString()}`);
+    if (needsSeats && selectedSeats.size > 0) {
+      setReserving(true);
+      try {
+        const sessionId = crypto.randomUUID();
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}/tiers/${selectedTier.id}/seats/reserve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seats: [...selectedSeats].sort(), sessionId }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({})) as { error?: string };
+          alert(err.error ?? 'Some seats are no longer available. Please re-select.');
+          setSelectedSeats(new Set());
+          await fetchSeatMap(selectedTier.id);
+          return;
+        }
+        const p = new URLSearchParams({ tier: selectedTier.id, qty: String(qty), seats: [...selectedSeats].sort().join(','), session: sessionId });
+        router.push(`/e/${shareSlug}/checkout?${p.toString()}`);
+      } finally {
+        setReserving(false);
+      }
+    } else {
+      const p = new URLSearchParams({ tier: selectedTier.id, qty: String(qty) });
+      router.push(`/e/${shareSlug}/checkout?${p.toString()}`);
+    }
   }
 
   return (
@@ -470,7 +505,7 @@ export default function TicketSelector({ shareSlug, tiers, coverImageUrl, hasSea
             <span className="font-bold text-slate-800">{qty} seat{qty !== 1 ? 's' : ''}</span>
             {' '}on the map — premium rows (A–C) are closest to the stage.
           </p>
-          <SeatMap tier={selectedTier} selected={selectedSeats} onToggle={toggleSeat} maxSeats={qty} />
+          <SeatMap tier={selectedTier} selected={selectedSeats} onToggle={toggleSeat} maxSeats={qty} seatStatuses={seatStatuses} loading={loadingSeats} />
         </div>
       )}
 

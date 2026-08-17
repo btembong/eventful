@@ -1,58 +1,79 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback, use, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useApiFetch } from '@/contexts/auth-context';
 import { ThinkingOrb } from 'thinking-orbs';
 import { toast } from '@/components/Toast';
-import { TicketIcon } from '@/components/icons';
+import { TicketIcon, UserIcon, WalletIcon, CheckIcon } from '@/components/icons';
 
-// ─── Tier colour palette ──────────────────────────────────────────────────────
+// ─── CSS animations ────────────────────────────────────────────────────────────
+
+const ANIM_CSS = `
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes ticketPop {
+    0%   { opacity: 0; transform: translateY(-16px) scale(0.96); }
+    65%  { transform: translateY(3px) scale(1.01); }
+    100% { opacity: 1; transform: none; }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%  { transform: translateX(-5px); }
+    40%  { transform: translateX(5px); }
+    60%  { transform: translateX(-4px); }
+    80%  { transform: translateX(4px); }
+  }
+  @keyframes countPulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+`;
+
+// ─── Tier colour palette ────────────────────────────────────────────────────────
 
 type TierPalette = {
-  accent: string;   // left border
-  iconBg: string;   // icon circle bg
-  iconText: string; // icon colour
-  badge: string;    // name badge
+  accent: string;
+  iconBg: string;
+  iconText: string;
+  badge: string;
   badgeText: string;
   selectedBg: string;
   selectedBorder: string;
   priceText: string;
-  label: string;    // tier label shown in badge
+  label: string;
 };
 
 function getTierPalette(name: string, index: number): TierPalette {
   const n = name.toLowerCase();
 
-  // VVIP / Diamond / Platinum — darkest brand shade
   if (n.includes('vvip') || n.includes('diamond') || n.includes('platinum'))
-    return { accent: 'border-l-brand-700', iconBg: 'bg-brand-950', iconText: 'text-white', badge: 'bg-brand-950', badgeText: 'text-white', selectedBg: 'bg-brand-950/5', selectedBorder: 'border-brand-700', priceText: 'text-brand-700', label: 'VVIP' };
+    return { accent: 'border-l-brand-950', iconBg: 'bg-brand-950', iconText: 'text-white', badge: 'bg-brand-950', badgeText: 'text-white', selectedBg: 'bg-brand-950/5', selectedBorder: 'border-brand-700', priceText: 'text-brand-700', label: 'VVIP' };
 
-  // VIP / Gold / Premium — strong brand orange
   if (n.includes('vip') || n.includes('gold') || n.includes('premium'))
     return { accent: 'border-l-brand-600', iconBg: 'bg-brand-600', iconText: 'text-white', badge: 'bg-brand-600', badgeText: 'text-white', selectedBg: 'bg-brand-50', selectedBorder: 'border-brand-500', priceText: 'text-brand-600', label: 'VIP' };
 
-  // Free / Complimentary — light brand tint
-  if (n.includes('free') || n.includes('compli') || n.includes('compl'))
-    return { accent: 'border-l-brand-300', iconBg: 'bg-brand-50', iconText: 'text-brand-600', badge: 'bg-brand-50', badgeText: 'text-brand-600', selectedBg: 'bg-brand-50/60', selectedBorder: 'border-brand-300', priceText: 'text-brand-600', label: 'Free' };
+  if (n.includes('free') || n.includes('compli'))
+    return { accent: 'border-l-brand-400', iconBg: 'bg-brand-50', iconText: 'text-brand-600', badge: 'bg-brand-50', badgeText: 'text-brand-600', selectedBg: 'bg-brand-50/60', selectedBorder: 'border-brand-300', priceText: 'text-brand-600', label: 'Free' };
 
-  // Invite / Backstage / Press — charcoal brand
   if (n.includes('invite') || n.includes('backstage') || n.includes('press'))
     return { accent: 'border-l-brand-950', iconBg: 'bg-brand-950', iconText: 'text-brand-400', badge: 'bg-brand-950', badgeText: 'text-brand-300', selectedBg: 'bg-brand-950/5', selectedBorder: 'border-brand-950', priceText: 'text-brand-950', label: 'Invite' };
 
-  // Cycling shades for everything else
   const palettes: TierPalette[] = [
-    { accent: 'border-l-brand-500', iconBg: 'bg-brand-100', iconText: 'text-brand-600', badge: 'bg-brand-50', badgeText: 'text-brand-700', selectedBg: 'bg-brand-50/60', selectedBorder: 'border-brand-400', priceText: 'text-brand-600', label: 'Standard' },
-    { accent: 'border-l-brand-400', iconBg: 'bg-brand-50', iconText: 'text-brand-500', badge: 'bg-brand-50', badgeText: 'text-brand-600', selectedBg: 'bg-brand-50/40', selectedBorder: 'border-brand-300', priceText: 'text-brand-500', label: 'General' },
+    { accent: 'border-l-brand-500', iconBg: 'bg-brand-100', iconText: 'text-brand-600', badge: 'bg-brand-50',  badgeText: 'text-brand-700', selectedBg: 'bg-brand-50/60',  selectedBorder: 'border-brand-400', priceText: 'text-brand-600', label: 'Standard'   },
+    { accent: 'border-l-brand-400', iconBg: 'bg-brand-50',  iconText: 'text-brand-500', badge: 'bg-brand-50',  badgeText: 'text-brand-600', selectedBg: 'bg-brand-50/40',  selectedBorder: 'border-brand-300', priceText: 'text-brand-500', label: 'General'    },
     { accent: 'border-l-brand-600', iconBg: 'bg-brand-100', iconText: 'text-brand-700', badge: 'bg-brand-100', badgeText: 'text-brand-800', selectedBg: 'bg-brand-100/60', selectedBorder: 'border-brand-500', priceText: 'text-brand-700', label: 'Early Bird' },
   ];
   return palettes[index % palettes.length];
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ─────────────────────────────────────────────────────────────────
 
-const FEE_PCT = 0.10;
+const FEE_PCT      = 0.10;
+const SEAT_HOLD_MS = 10 * 60 * 1000;
 
 const COUNTRY_CODES = [
   { code: '+237', label: '🇨🇲 +237' },
@@ -66,7 +87,6 @@ const COUNTRY_CODES = [
 
 type CheckoutStep = 'tickets' | 'contact' | 'payment';
 const STEPS: CheckoutStep[] = ['tickets', 'contact', 'payment'];
-const STEP_LABELS = ['Tickets', 'Contact', 'Payment'];
 
 interface Tier {
   id: string; name: string; type: 'FREE' | 'PAID' | 'INVITE_ONLY';
@@ -96,7 +116,36 @@ function fmtDate(iso: string) {
   });
 }
 
-// ─── Step bar ─────────────────────────────────────────────────────────────────
+function calcOrder(tiers: Tier[], qty: Record<string, number>, promo: PromoResult | null) {
+  const lines      = tiers.filter(t => (qty[t.id] ?? 0) > 0);
+  const currency   = lines.find(t => t.type === 'PAID')?.currency ?? 'XAF';
+  const subtotal   = lines.reduce((s, t) => s + (t.type === 'PAID' ? Number(t.price) * (qty[t.id] ?? 0) : 0), 0);
+  const discount   = promo ? Math.min(promo.discountAmount, subtotal) : 0;
+  const discounted = subtotal - discount;
+  const fees       = Math.round(discounted * FEE_PCT);
+  const total      = discounted + fees;
+  const totalQty   = Object.values(qty).reduce((a, b) => a + b, 0);
+  return { lines, currency, subtotal, discount, fees, total, totalQty };
+}
+
+// ─── Countdown hook ─────────────────────────────────────────────────────────────
+
+function useCountdown(deadlineMs: number | null): number | null {
+  const [remaining, setRemaining] = useState<number | null>(
+    deadlineMs ? Math.max(0, deadlineMs - Date.now()) : null,
+  );
+  useEffect(() => {
+    if (!deadlineMs) return;
+    const id = setInterval(() => setRemaining(Math.max(0, deadlineMs - Date.now())), 1000);
+    return () => clearInterval(id);
+  }, [deadlineMs]);
+  return remaining;
+}
+
+// ─── Step bar ───────────────────────────────────────────────────────────────────
+
+const STEP_LABELS = ['Tickets', 'Contact', 'Payment'];
+const STEP_ICONS  = [TicketIcon, UserIcon, WalletIcon];
 
 function StepBar({ step }: { step: CheckoutStep }) {
   const idx = STEPS.indexOf(step);
@@ -105,19 +154,21 @@ function StepBar({ step }: { step: CheckoutStep }) {
       {STEP_LABELS.map((label, i) => {
         const done    = i < idx;
         const current = i === idx;
+        const StepIcon = STEP_ICONS[i];
         return (
           <div key={label} className="flex items-center">
             <div className="flex flex-col items-center">
-              <div className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold transition-all ${
-                done    ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/30' :
-                current ? 'border-2 border-brand-600 bg-white text-brand-600 shadow-sm shadow-brand-600/20' :
-                          'border-2 border-slate-200 bg-white text-slate-300'
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 ${
+                done
+                  ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/30'
+                  : current
+                  ? 'border-2 border-brand-600 bg-white text-brand-600 shadow-sm shadow-brand-600/20'
+                  : 'border-2 border-slate-200 bg-white text-slate-300'
               }`}>
-                {done ? (
-                  <svg viewBox="0 0 12 12" className="h-3 w-3 fill-white">
-                    <path d="M10 3 5 8.5 2 5.5l-.8.8 3.8 3.8 5.8-6.3z" />
-                  </svg>
-                ) : i + 1}
+                {done
+                  ? <CheckIcon className="h-4 w-4" />
+                  : <StepIcon className="h-4 w-4" />
+                }
               </div>
               <span className={`mt-1.5 text-[10px] font-bold uppercase tracking-wide transition-colors ${
                 done || current ? 'text-brand-600' : 'text-slate-300'
@@ -126,7 +177,12 @@ function StepBar({ step }: { step: CheckoutStep }) {
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`mx-4 mb-5 h-px w-16 sm:w-28 transition-colors ${i < idx ? 'bg-brand-600' : 'bg-slate-200'}`} />
+              <div className="relative mx-3 mb-5 h-px w-12 overflow-hidden rounded-full bg-slate-200 sm:w-24">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-brand-600 transition-all duration-500"
+                  style={{ width: i < idx ? '100%' : '0%' }}
+                />
+              </div>
             )}
           </div>
         );
@@ -135,7 +191,7 @@ function StepBar({ step }: { step: CheckoutStep }) {
   );
 }
 
-// ─── Promo code field ─────────────────────────────────────────────────────────
+// ─── Promo code field ───────────────────────────────────────────────────────────
 
 function PromoField({
   eventId, subtotal, qty, tiers, onApply, onRemove, applied,
@@ -210,9 +266,7 @@ function PromoField({
           disabled={loading || !code.trim()}
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-slate-700 disabled:opacity-40"
         >
-          {loading
-            ? <ThinkingOrb state="breathing" size={20} theme="dark" />
-            : 'Apply'}
+          {loading ? <ThinkingOrb state="breathing" size={20} theme="dark" /> : 'Apply'}
         </button>
       </div>
       {error && <p className="text-[11px] text-red-500">{error}</p>}
@@ -220,44 +274,70 @@ function PromoField({
   );
 }
 
-// ─── Summary sidebar ──────────────────────────────────────────────────────────
+// ─── Summary sidebar ─────────────────────────────────────────────────────────────
 
-function Summary({ event, tiers, qty, step, promo, onPromoApply, onPromoRemove }: {
+function Summary({
+  event, tiers, qty, step, promo, seatCountdown, onPromoApply, onPromoRemove,
+}: {
   event: EventData;
   tiers: Tier[];
   qty: Record<string, number>;
   step: CheckoutStep;
   promo: PromoResult | null;
+  seatCountdown: number | null;
   onPromoApply: (r: PromoResult) => void;
   onPromoRemove: () => void;
 }) {
-  const lines    = tiers.filter(t => (qty[t.id] ?? 0) > 0);
-  const subtotal = lines.reduce((s, t) => s + (t.type === 'PAID' ? Number(t.price) * (qty[t.id] ?? 0) : 0), 0);
-  const discount = promo ? Math.min(promo.discountAmount, subtotal) : 0;
-  const discounted = subtotal - discount;
-  const fees     = Math.round(discounted * FEE_PCT);
-  const total    = discounted + fees;
-  const currency = lines.find(t => t.type === 'PAID')?.currency ?? 'XAF';
-  const totalQty = Object.values(qty).reduce((a, b) => a + b, 0);
+  const { lines, currency, subtotal, discount, fees, total, totalQty } = calcOrder(tiers, qty, promo);
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="mb-4 text-sm font-extrabold uppercase tracking-wide text-slate-400">Order summary</h3>
+      <h3 className="mb-4 text-xs font-extrabold uppercase tracking-widest text-slate-400">Order summary</h3>
       <p className="mb-0.5 text-sm font-bold text-slate-800">{event.title}</p>
       <p className="mb-5 text-xs text-slate-400">{fmtDate(event.startsAt)} · {event.venue}</p>
 
+      {/* Seat hold countdown */}
+      {seatCountdown !== null && seatCountdown > 0 && (
+        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5">
+          <span style={{ animation: 'countPulse 2s ease-in-out infinite', display: 'inline-block' }}>⏱</span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-amber-700">Seats held for</p>
+            <p className="font-mono text-sm font-extrabold text-amber-800">
+              {String(Math.floor(seatCountdown / 60000)).padStart(2, '0')}
+              :{String(Math.floor((seatCountdown % 60000) / 1000)).padStart(2, '0')}
+            </p>
+          </div>
+        </div>
+      )}
+      {seatCountdown === 0 && (
+        <div className="mb-4 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5">
+          <p className="text-xs font-bold text-red-600">Seat hold expired.</p>
+          <p className="mt-0.5 text-[11px] text-red-500">Please go back and select seats again.</p>
+        </div>
+      )}
+
+      {/* Ticket lines — mini ticket cards */}
       {lines.length === 0 ? (
         <p className="rounded-xl bg-slate-50 py-4 text-center text-xs text-slate-400">
           Select tickets to see your order
         </p>
       ) : (
-        <div className="space-y-2.5">
-          {lines.map(t => {
-            const q = qty[t.id] ?? 0;
+        <div className="space-y-2">
+          {lines.map((t) => {
+            const q   = qty[t.id] ?? 0;
+            const pal = getTierPalette(t.name, tiers.indexOf(t));
             return (
-              <div key={t.id} className="flex items-start justify-between gap-2 text-sm">
-                <span className="text-slate-600">{q} × {t.name}</span>
-                <span className="shrink-0 font-semibold text-slate-900">
+              <div
+                key={t.id}
+                className={`flex items-center justify-between gap-2 overflow-hidden rounded-xl border border-l-4 bg-slate-50 px-3 py-2.5 ${pal.accent}`}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold text-slate-800">{t.name}</p>
+                  <span className={`mt-0.5 inline-block rounded-full px-2 py-px text-[9px] font-bold uppercase tracking-wide ${pal.badge} ${pal.badgeText}`}>
+                    {q} × {pal.label}
+                  </span>
+                </div>
+                <span className="shrink-0 text-sm font-extrabold text-slate-900">
                   {t.type === 'FREE' ? 'Free' : fmtMoney(Number(t.price) * q, currency)}
                 </span>
               </div>
@@ -292,7 +372,7 @@ function Summary({ event, tiers, qty, step, promo, onPromoApply, onPromoRemove }
         </div>
       )}
 
-      {/* Promo code input — show on payment step for paid orders */}
+      {/* Promo code — shown on payment step */}
       {step === 'payment' && (
         <PromoField
           eventId={event.id}
@@ -305,7 +385,7 @@ function Summary({ event, tiers, qty, step, promo, onPromoApply, onPromoRemove }
         />
       )}
 
-      <div className="mt-4 border-t border-slate-100 pt-4 flex items-center justify-between">
+      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
         <span className="text-sm font-extrabold text-slate-900">Total</span>
         <span className="text-base font-extrabold text-slate-900">
           {lines.length === 0 ? '—'
@@ -317,7 +397,7 @@ function Summary({ event, tiers, qty, step, promo, onPromoApply, onPromoRemove }
   );
 }
 
-// ─── Release warning modal ────────────────────────────────────────────────────
+// ─── Release warning modal ───────────────────────────────────────────────────────
 
 function ReleaseWarningModal({ onStay, onLeave }: { onStay: () => void; onLeave: () => void }) {
   return (
@@ -348,19 +428,56 @@ function ReleaseWarningModal({ onStay, onLeave }: { onStay: () => void; onLeave:
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Loading screen ──────────────────────────────────────────────────────────────
+
+function LoadingScreen() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-white">
+      <ThinkingOrb state="breathing" size={64} theme="light" />
+      <p className="text-sm font-medium text-slate-400">Loading event…</p>
+    </div>
+  );
+}
+
+// ─── Page export (Suspense wrapper for useSearchParams) ──────────────────────────
 
 export default function CheckoutPage({ params }: { params: Promise<{ slug: string }> }) {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <CheckoutInner params={params} />
+    </Suspense>
+  );
+}
+
+// ─── Main checkout component ─────────────────────────────────────────────────────
+
+function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router   = useRouter();
   const apiFetch = useApiFetch();
+  const searchParams = useSearchParams();
+
+  // Pre-fill from TicketSelector URL params
+  const initTierId   = searchParams.get('tier') ?? null;
+  const initQtyNum   = Math.max(1, parseInt(searchParams.get('qty') ?? '1', 10) || 1);
+  const initSeats    = (searchParams.get('seats') ?? '').split(',').filter(Boolean);
+  const initSession  = searchParams.get('session') ?? null;
 
   const [event,   setEvent]   = useState<EventData | null>(null);
   const [loading, setLoading] = useState(true);
   const [step,    setStep]    = useState<CheckoutStep>('tickets');
+  const [animKey, setAnimKey] = useState(0);
 
-  // Step 1
-  const [qty, setQty] = useState<Record<string, number>>({});
+  // Step 1 — pre-filled from TicketSelector URL
+  const [qty, setQty] = useState<Record<string, number>>(
+    initTierId ? { [initTierId]: initQtyNum } : {},
+  );
+
+  // Seat hold countdown — 10 min from page load if seats were pre-selected
+  const [seatDeadline] = useState<number | null>(
+    initSeats.length > 0 ? Date.now() + SEAT_HOLD_MS : null,
+  );
+  const seatCountdown = useCountdown(seatDeadline);
 
   // Step 2
   const [firstName,    setFirstName]    = useState('');
@@ -371,17 +488,18 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
   const [countryCode,  setCountryCode]  = useState('+237');
 
   // Step 3
-  const [orderId,         setOrderId]        = useState<string | null>(null);
-  const [paymentUrl,      setPaymentUrl]      = useState<string | null>(null);
-  const [paymentRequired, setPaymentRequired] = useState(false);
-  const [orderSuccess,    setOrderSuccess]    = useState(false);
-  const [creating,        setCreating]        = useState(false);
-  const [error,           setError]           = useState('');
-  const [showRelease,     setShowRelease]     = useState(false);
-  const [promo,           setPromo]           = useState<PromoResult | null>(null);
+  const [orderId,         setOrderId]         = useState<string | null>(null);
+  const [paymentUrl,      setPaymentUrl]       = useState<string | null>(null);
+  const [paymentRequired, setPaymentRequired]  = useState(false);
+  const [orderSuccess,    setOrderSuccess]     = useState(false);
+  const [creating,        setCreating]         = useState(false);
+  const [error,           setError]            = useState('');
+  const [showRelease,     setShowRelease]      = useState(false);
+  const [promo,           setPromo]            = useState<PromoResult | null>(null);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Fetch event
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/slug/${encodeURIComponent(slug)}`)
       .then(r => r.ok ? r.json() : null)
@@ -389,14 +507,29 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
       .finally(() => setLoading(false));
   }, [slug]);
 
+  // Confetti burst on successful order
+  useEffect(() => {
+    if (!orderSuccess) return;
+    import('canvas-confetti').then(m => {
+      const fire = m.default;
+      fire({ particleCount: 150, spread: 90, origin: { y: 0.55 }, colors: ['#F07200', '#333333', '#F0F0F0', '#FFB347', '#ffffff'], zIndex: 9999 });
+      setTimeout(() => fire({ particleCount: 80, spread: 60, origin: { x: 0.15, y: 0.6 }, colors: ['#F07200', '#FFB347'], zIndex: 9999 }), 400);
+      setTimeout(() => fire({ particleCount: 80, spread: 60, origin: { x: 0.85, y: 0.6 }, colors: ['#F07200', '#FFB347'], zIndex: 9999 }), 650);
+    }).catch(() => { /* ignore if unavailable */ });
+  }, [orderSuccess]);
+
   const tiers         = event?.tiers ?? [];
   const selectedTiers = tiers.filter(t => (qty[t.id] ?? 0) > 0);
-  const totalQty      = Object.values(qty).reduce((a, b) => a + b, 0);
-  const canTickets    = totalQty > 0;
-  const canContact    = firstName.trim() && lastName.trim() &&
-                        email.trim() && emailConfirm.trim() && email === emailConfirm;
+  const { lines, currency, subtotal, total, totalQty } = calcOrder(tiers, qty, promo);
+  const canTickets = totalQty > 0;
+  const canContact = !!(firstName.trim() && lastName.trim() &&
+                     email.trim() && emailConfirm.trim() && email === emailConfirm);
 
-  function goTo(s: CheckoutStep) { setStep(s); window.scrollTo(0, 0); }
+  function goTo(s: CheckoutStep) {
+    setStep(s);
+    setAnimKey(k => k + 1);
+    window.scrollTo(0, 0);
+  }
 
   function handleBack() {
     if (step === 'payment' && orderId) { setShowRelease(true); return; }
@@ -423,6 +556,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
             buyerEmail: email.trim(),
             buyerPhone: phone.trim() ? `${countryCode}${phone.trim()}` : undefined,
             promoCode:  promo?.code,
+            ...(tier.id === initTierId && initSeats.length > 0 ? { seats: initSeats, sessionId: initSession } : {}),
           }),
         });
         if (!res.ok) {
@@ -463,19 +597,12 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
           setError('Payment not confirmed yet. Please complete payment and try again.');
         }
       }
-    } catch {}
+    } catch { /* ignore */ }
   }, [orderId, apiFetch]);
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────────
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-white">
-        <ThinkingOrb state="breathing" size={64} theme="light" />
-        <p className="text-sm font-medium text-slate-400">Loading event…</p>
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen />;
 
   if (!event) {
     return (
@@ -487,7 +614,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 pb-24 lg:pb-0">
+      <style dangerouslySetInnerHTML={{ __html: ANIM_CSS }} />
 
       {showRelease && (
         <ReleaseWarningModal
@@ -496,20 +624,24 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
         />
       )}
 
-      {/* Header */}
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="border-b border-slate-200 bg-white px-6 py-4 shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href={`/e/${slug}`}
+            <button
+              onClick={handleBack}
               className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-              aria-label="Back to event">
+              aria-label="Back"
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
               </svg>
-            </Link>
+            </button>
             <div>
               <h1 className="text-sm font-extrabold text-slate-900">Checkout</h1>
-              <p className="text-[11px] text-slate-400 leading-none mt-0.5 truncate max-w-[200px] sm:max-w-none">{event.title}</p>
+              <p className="mt-0.5 max-w-[200px] truncate text-[11px] leading-none text-slate-400 sm:max-w-none">
+                {event.title}
+              </p>
             </div>
           </div>
           <Link href={`/e/${slug}`}
@@ -522,19 +654,25 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
         </div>
       </div>
 
-      {/* Step bar */}
+      {/* ── Step bar ─────────────────────────────────────────────────────────── */}
       <div className="border-b border-slate-200 bg-white py-5 shadow-sm">
-        <div className="flex justify-center"><StepBar step={step} /></div>
+        <div className="flex justify-center">
+          <StepBar step={step} />
+        </div>
       </div>
 
-      {/* Body */}
+      {/* ── Body ─────────────────────────────────────────────────────────────── */}
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
 
-          {/* Left: step content */}
-          <div className="min-w-0 flex-1">
+          {/* Left: step content — slides in on each step change */}
+          <div
+            key={animKey}
+            className="min-w-0 flex-1"
+            style={{ animation: 'slideInRight 0.28s ease both' }}
+          >
 
-            {/* ── Tickets ─────────────────────────────────────────── */}
+            {/* ── Step 1: Tickets ──────────────────────────────────────────── */}
             {step === 'tickets' && (
               <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100 sm:p-8">
                 <h2 className="mb-1 text-xl font-extrabold text-slate-900">Choose your tickets</h2>
@@ -566,7 +704,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
                                 : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
                           }`}
                         >
-                          {/* Left icon column */}
+                          {/* Icon column */}
                           <div className="flex w-16 shrink-0 flex-col items-center justify-start gap-2 border-r border-dashed border-slate-200 px-2 py-4 sm:w-20">
                             <div className={`flex h-10 w-10 items-center justify-center rounded-full ${pal.iconBg}`}>
                               <TicketIcon className={`h-5 w-5 ${pal.iconText}`} />
@@ -624,7 +762,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
                             </div>
 
                             {/* Qty stepper */}
-                            <div className="flex shrink-0 items-center gap-0">
+                            <div className="flex shrink-0 items-center">
                               {soldOut ? (
                                 <span className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-400">Sold out</span>
                               ) : (
@@ -658,7 +796,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
                           {/* Selected check badge */}
                           {!soldOut && selected && (
                             <div className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full ${pal.iconBg}`}>
-                              <svg viewBox="0 0 12 12" className={`h-2.5 w-2.5 ${pal.iconText}`} fill="currentColor">
+                              <svg viewBox="0 0 12 12" className={`h-2.5 w-2.5 fill-current ${pal.iconText}`}>
                                 <path d="M10 3 5 8.5 2 5.5l-.8.8 3.8 3.8 5.8-6.3z" />
                               </svg>
                             </div>
@@ -685,16 +823,16 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
               </div>
             )}
 
-            {/* ── Contact ──────────────────────────────────────────── */}
+            {/* ── Step 2: Contact ───────────────────────────────────────────── */}
             {step === 'contact' && (
               <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100 sm:p-8">
-                <h2 className="mb-1 text-xl font-extrabold text-slate-900">Contact information</h2>
-                <p className="mb-6 text-sm text-slate-400">Your ticket confirmation will be sent to this email address.</p>
+                <h2 className="mb-1 text-xl font-extrabold text-slate-900">{"Who's coming?"}</h2>
+                <p className="mb-6 text-sm text-slate-400">{"We'll send your tickets here — double-check your email!"}</p>
 
                 <div className="space-y-5">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {[
-                      { label: 'First name', value: firstName, set: setFirstName, placeholder: 'Ama', autoComplete: 'given-name' },
+                      { label: 'First name', value: firstName, set: setFirstName, placeholder: 'Ama',   autoComplete: 'given-name'  },
                       { label: 'Last name',  value: lastName,  set: setLastName,  placeholder: 'Mbeki', autoComplete: 'family-name' },
                     ].map(({ label, value, set: setter, placeholder, autoComplete }) => (
                       <div key={label}>
@@ -734,7 +872,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
                     <input
                       type="email"
                       value={emailConfirm}
-                      placeholder="you@example.com"
+                      placeholder="one more time, just to be sure"
                       autoComplete="email"
                       onChange={e => setEmailConfirm(e.target.value)}
                       className={`w-full rounded-xl border px-4 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500/20 ${
@@ -754,7 +892,9 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-xs font-bold text-slate-700">Phone number <span className="text-slate-400 font-normal">(optional)</span></label>
+                    <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                      Phone number <span className="font-normal text-slate-400">(optional)</span>
+                    </label>
                     <div className="flex gap-2">
                       <select
                         value={countryCode}
@@ -773,8 +913,13 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
                     </div>
                   </div>
 
+                  {/* Error — shakes on each new message */}
                   {error && (
-                    <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                    <div
+                      key={error}
+                      style={{ animation: 'shake 0.4s ease' }}
+                      className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3"
+                    >
                       <svg viewBox="0 0 20 20" fill="currentColor" className="mt-0.5 h-4 w-4 shrink-0 text-red-400">
                         <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
                       </svg>
@@ -811,23 +956,23 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
               </div>
             )}
 
-            {/* ── Payment ──────────────────────────────────────────── */}
+            {/* ── Step 3: Payment ───────────────────────────────────────────── */}
             {step === 'payment' && (
               <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100 sm:p-8">
                 <h2 className="mb-1 text-xl font-extrabold text-slate-900">Payment</h2>
                 <p className="mb-6 text-sm text-slate-400">Complete your payment securely to confirm your tickets.</p>
 
-                {/* Free — success */}
+                {/* Free — instant success */}
                 {orderSuccess && !paymentRequired && (
                   <SuccessCard email={email} slug={slug} paid={false} />
                 )}
 
-                {/* Paid — confirmed */}
+                {/* Paid — confirmed after check */}
                 {paymentRequired && orderSuccess && (
                   <SuccessCard email={email} slug={slug} paid />
                 )}
 
-                {/* Paid — iframe */}
+                {/* Paid — show iframe */}
                 {paymentRequired && !orderSuccess && paymentUrl && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
@@ -859,14 +1004,14 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
                           <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
                             <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
                           </svg>
-                          I&apos;ve completed payment
+                          {"I've completed payment"}
                         </button>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Waiting for URL */}
+                {/* Waiting for payment URL */}
                 {paymentRequired && !paymentUrl && !orderSuccess && (
                   <div className="flex flex-col items-center gap-5 py-16">
                     <ThinkingOrb state="connecting" size={64} theme="light" />
@@ -877,7 +1022,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
             )}
           </div>
 
-          {/* Right: Summary */}
+          {/* Right: Order summary */}
           <div className="w-full lg:w-80 lg:shrink-0">
             <div className="lg:sticky lg:top-8">
               <Summary
@@ -886,11 +1031,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
                 qty={qty}
                 step={step}
                 promo={promo}
+                seatCountdown={seatCountdown}
                 onPromoApply={setPromo}
                 onPromoRemove={() => setPromo(null)}
               />
-
-              {/* Security note */}
               <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-slate-400">
                 <svg viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
                   <path fillRule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V6A1.5 1.5 0 0 0 3 7.5v5A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-5A1.5 1.5 0 0 0 11.5 6V4.5A3.5 3.5 0 0 0 8 1Zm2.5 5V4.5a2.5 2.5 0 0 0-5 0V6h5Z" clipRule="evenodd" />
@@ -901,13 +1045,59 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
           </div>
         </div>
       </div>
+
+      {/* ── Mobile sticky total bar ──────────────────────────────────────────── */}
+      {step !== 'payment' && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-100 bg-white/95 py-3 shadow-2xl backdrop-blur-sm lg:hidden">
+          <div className="mx-auto max-w-5xl px-4">
+            {totalQty > 0 ? (
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-medium text-slate-500">
+                    {totalQty} ticket{totalQty !== 1 ? 's' : ''}
+                  </p>
+                  <p className="text-sm font-extrabold text-slate-900">
+                    {subtotal === 0 ? 'Free' : fmtMoney(total, currency)}
+                  </p>
+                </div>
+                {step === 'tickets' && (
+                  <button
+                    onClick={() => goTo('contact')}
+                    disabled={!canTickets}
+                    className="rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition hover:bg-brand-500 disabled:opacity-40"
+                  >
+                    Continue →
+                  </button>
+                )}
+                {step === 'contact' && (
+                  <button
+                    onClick={handleCreateOrder}
+                    disabled={!canContact || creating}
+                    className="flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 disabled:opacity-40"
+                  >
+                    {creating && <ThinkingOrb state="breathing" size={18} theme="dark" />}
+                    {creating ? 'Processing…' : 'Pay now'}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="text-center text-xs text-slate-400">Select tickets to continue</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
+// ─── Success card ─────────────────────────────────────────────────────────────
+
 function SuccessCard({ email, slug, paid }: { email: string; slug: string; paid: boolean }) {
   return (
-    <div className="flex flex-col items-center gap-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-14 text-center">
+    <div
+      className="flex flex-col items-center gap-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-14 text-center"
+      style={{ animation: 'ticketPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both' }}
+    >
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 shadow-sm">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-8 w-8 text-emerald-600">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0" />

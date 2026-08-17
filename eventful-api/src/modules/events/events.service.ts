@@ -65,6 +65,7 @@ export interface CreateEventInput {
   capacity: number;
   price: number;
   currency?: string;
+  country?: string;
   defaultReminderOffsets?: number[];
   metadata?: unknown;
   coverImageUrl?: string;
@@ -79,6 +80,7 @@ export interface UpdateEventInput {
   capacity?: number;
   price?: number;
   currency?: string;
+  country?: string;
   defaultReminderOffsets?: number[];
   metadata?: unknown;
   isPublished?: boolean;
@@ -89,8 +91,10 @@ export interface UpdateEventInput {
 
 export interface DiscoveryFilters {
   category?: EventCategory;
+  country?: string;
   from?: string;
   to?: string;
+  q?: string;
   page?: number;
   limit?: number;
 }
@@ -126,6 +130,7 @@ export const eventsService = {
           price: data.price,
           currency: data.currency ?? 'XAF',
           shareSlug,
+          country: data.country ?? null,
           defaultReminderOffsets: data.defaultReminderOffsets ?? [],
           metadata: (validatedMetadata ?? undefined) as Prisma.InputJsonValue | undefined,
           coverImageUrl: data.coverImageUrl ?? undefined,
@@ -147,7 +152,7 @@ export const eventsService = {
   },
 
   async getDiscoveryFeed(filters: DiscoveryFilters) {
-    const { category, from, to, q, page = 1, limit = 20 } = filters;
+    const { category, country, from, to, q, page = 1, limit = 20 } = filters;
     const cacheKey = discoveryKey(
       crypto.createHash('sha1').update(JSON.stringify(filters)).digest('hex'),
     );
@@ -160,6 +165,7 @@ export const eventsService = {
       isCancelled: false,
       deletedAt: null,
       ...(category ? { category } : {}),
+      ...(country  ? { country } : {}),
       ...(from || to
         ? { startsAt: { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lte: new Date(to) } : {}) } }
         : {}),
@@ -268,6 +274,7 @@ export const eventsService = {
           ...(data.capacity    !== undefined ? { capacity: data.capacity }  : {}),
           ...(data.price       !== undefined ? { price: data.price }        : {}),
           ...(data.currency    ? { currency: data.currency }       : {}),
+          ...(data.country    !== undefined ? { country: data.country } : {}),
           ...(data.defaultReminderOffsets ? { defaultReminderOffsets: data.defaultReminderOffsets } : {}),
           ...(validatedMetadata ? { metadata: validatedMetadata as Prisma.InputJsonValue } : {}),
           ...(data.isPublished !== undefined ? { isPublished: data.isPublished } : {}),

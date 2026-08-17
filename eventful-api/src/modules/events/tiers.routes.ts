@@ -37,6 +37,9 @@ export default async function tiersRoutes(app: FastifyInstance) {
       orderLimit?: number; isOnSale?: boolean;
       salesStart?: string; salesEnd?: string;
       perks?: string[]; inviteCode?: string; sortOrder?: number;
+      // Seating
+      hasSeating?: boolean; seatRows?: number; seatCols?: number;
+      seatSections?: unknown; premiumRows?: string[]; blockedSeats?: string[];
     };
   }>('/:id/tiers', {
     schema: {
@@ -52,19 +55,25 @@ export default async function tiersRoutes(app: FastifyInstance) {
         type: 'object',
         required: ['name', 'price', 'capacity'],
         properties: {
-          name:        { type: 'string', minLength: 1 },
-          description: { type: 'string' },
-          type:        { type: 'string', enum: ['FREE', 'PAID', 'INVITE_ONLY'], default: 'PAID' },
-          price:       { type: 'number', minimum: 0 },
-          currency:    { type: 'string', default: 'XAF' },
-          capacity:    { type: 'integer', minimum: 1 },
-          orderLimit:  { type: 'integer', minimum: 1, default: 10 },
-          isOnSale:    { type: 'boolean', default: true },
-          salesStart:  { type: 'string', format: 'date-time' },
-          salesEnd:    { type: 'string', format: 'date-time' },
-          perks:       { type: 'array', items: { type: 'string' } },
-          inviteCode:  { type: 'string' },
-          sortOrder:   { type: 'integer', default: 0 },
+          name:         { type: 'string', minLength: 1 },
+          description:  { type: 'string' },
+          type:         { type: 'string', enum: ['FREE', 'PAID', 'INVITE_ONLY'], default: 'PAID' },
+          price:        { type: 'number', minimum: 0 },
+          currency:     { type: 'string', default: 'XAF' },
+          capacity:     { type: 'integer', minimum: 1 },
+          orderLimit:   { type: 'integer', minimum: 1, default: 10 },
+          isOnSale:     { type: 'boolean', default: true },
+          salesStart:   { type: 'string', format: 'date-time' },
+          salesEnd:     { type: 'string', format: 'date-time' },
+          perks:        { type: 'array', items: { type: 'string' } },
+          inviteCode:   { type: 'string' },
+          sortOrder:    { type: 'integer', default: 0 },
+          hasSeating:   { type: 'boolean', default: false },
+          seatRows:     { type: 'integer', minimum: 1, maximum: 26 },
+          seatCols:     { type: 'integer', minimum: 1 },
+          seatSections: { },
+          premiumRows:  { type: 'array', items: { type: 'string' } },
+          blockedSeats: { type: 'array', items: { type: 'string' } },
         },
       },
     },
@@ -77,22 +86,36 @@ export default async function tiersRoutes(app: FastifyInstance) {
     if (!event) return reply.status(404).send({ error: 'Event not found' });
     if (event.creatorId !== req.user!.id) return reply.status(403).send({ error: 'Forbidden' });
 
+    const b = req.body;
+
+    // For seating tiers: derive capacity from layout if rows/cols provided
+    let capacity = b.capacity;
+    if (b.hasSeating && b.seatRows && b.seatCols) {
+      capacity = b.seatRows * b.seatCols - (b.blockedSeats?.length ?? 0);
+    }
+
     const tier = await prisma.ticketTier.create({
       data: {
-        eventId:     req.params.id,
-        name:        req.body.name,
-        description: req.body.description,
-        type:        (req.body.type as 'FREE' | 'PAID' | 'INVITE_ONLY') ?? 'PAID',
-        price:       req.body.price,
-        currency:    req.body.currency ?? 'XAF',
-        capacity:    req.body.capacity,
-        orderLimit:  req.body.orderLimit ?? 10,
-        isOnSale:    req.body.isOnSale ?? true,
-        salesStart:  req.body.salesStart ? new Date(req.body.salesStart) : null,
-        salesEnd:    req.body.salesEnd   ? new Date(req.body.salesEnd)   : null,
-        perks:       req.body.perks ?? [],
-        inviteCode:  req.body.inviteCode,
-        sortOrder:   req.body.sortOrder ?? 0,
+        eventId:      req.params.id,
+        name:         b.name,
+        description:  b.description,
+        type:         (b.type as 'FREE' | 'PAID' | 'INVITE_ONLY') ?? 'PAID',
+        price:        b.price,
+        currency:     b.currency ?? 'XAF',
+        capacity,
+        orderLimit:   b.orderLimit ?? 10,
+        isOnSale:     b.isOnSale ?? true,
+        salesStart:   b.salesStart ? new Date(b.salesStart) : null,
+        salesEnd:     b.salesEnd   ? new Date(b.salesEnd)   : null,
+        perks:        b.perks ?? [],
+        inviteCode:   b.inviteCode,
+        sortOrder:    b.sortOrder ?? 0,
+        hasSeating:   b.hasSeating ?? false,
+        seatRows:     b.hasSeating ? (b.seatRows ?? null) : null,
+        seatCols:     b.hasSeating ? (b.seatCols ?? null) : null,
+        seatSections: b.hasSeating ? (b.seatSections ?? null) : null,
+        premiumRows:  b.hasSeating ? (b.premiumRows ?? []) : [],
+        blockedSeats: b.hasSeating ? (b.blockedSeats ?? []) : [],
       },
     });
     return reply.status(201).send(tier);
@@ -105,7 +128,10 @@ export default async function tiersRoutes(app: FastifyInstance) {
       name?: string; description?: string; price?: number; capacity?: number;
       orderLimit?: number; isOnSale?: boolean;
       salesStart?: string | null; salesEnd?: string | null;
-      perks?: string[]; inviteCode?: string; sortOrder?: number;
+      perks?: string[]; inviteCode?: string | null; sortOrder?: number;
+      // Seating
+      premiumRows?: string[]; blockedSeats?: string[];
+      seatRows?: number; seatCols?: number; seatSections?: unknown;
     };
   }>('/:id/tiers/:tierId', {
     schema: {
@@ -123,17 +149,22 @@ export default async function tiersRoutes(app: FastifyInstance) {
       body: {
         type: 'object',
         properties: {
-          name:        { type: 'string', minLength: 1 },
-          description: { type: 'string' },
-          price:       { type: 'number', minimum: 0 },
-          capacity:    { type: 'integer', minimum: 1 },
-          orderLimit:  { type: 'integer', minimum: 1 },
-          isOnSale:    { type: 'boolean' },
-          salesStart:  { type: 'string', format: 'date-time', nullable: true },
-          salesEnd:    { type: 'string', format: 'date-time', nullable: true },
-          perks:       { type: 'array', items: { type: 'string' } },
-          inviteCode:  { type: 'string', nullable: true },
-          sortOrder:   { type: 'integer' },
+          name:         { type: 'string', minLength: 1 },
+          description:  { type: 'string' },
+          price:        { type: 'number', minimum: 0 },
+          capacity:     { type: 'integer', minimum: 1 },
+          orderLimit:   { type: 'integer', minimum: 1 },
+          isOnSale:     { type: 'boolean' },
+          salesStart:   { type: 'string', format: 'date-time', nullable: true },
+          salesEnd:     { type: 'string', format: 'date-time', nullable: true },
+          perks:        { type: 'array', items: { type: 'string' } },
+          inviteCode:   { type: 'string', nullable: true },
+          sortOrder:    { type: 'integer' },
+          premiumRows:  { type: 'array', items: { type: 'string' } },
+          blockedSeats: { type: 'array', items: { type: 'string' } },
+          seatRows:     { type: 'integer', minimum: 1, maximum: 26 },
+          seatCols:     { type: 'integer', minimum: 1 },
+          seatSections: { },
         },
       },
     },
@@ -155,17 +186,22 @@ export default async function tiersRoutes(app: FastifyInstance) {
     const updated = await prisma.ticketTier.update({
       where: { id: req.params.tierId },
       data: {
-        ...(b.name        !== undefined && { name: b.name }),
-        ...(b.description !== undefined && { description: b.description }),
-        ...(b.price       !== undefined && { price: b.price }),
-        ...(b.capacity    !== undefined && { capacity: b.capacity }),
-        ...(b.orderLimit  !== undefined && { orderLimit: b.orderLimit }),
-        ...(b.isOnSale    !== undefined && { isOnSale: b.isOnSale }),
-        ...(b.salesStart  !== undefined && { salesStart: b.salesStart ? new Date(b.salesStart) : null }),
-        ...(b.salesEnd    !== undefined && { salesEnd:   b.salesEnd   ? new Date(b.salesEnd)   : null }),
-        ...(b.perks       !== undefined && { perks: b.perks }),
-        ...(b.inviteCode  !== undefined && { inviteCode: b.inviteCode }),
-        ...(b.sortOrder   !== undefined && { sortOrder: b.sortOrder }),
+        ...(b.name         !== undefined && { name: b.name }),
+        ...(b.description  !== undefined && { description: b.description }),
+        ...(b.price        !== undefined && { price: b.price }),
+        ...(b.capacity     !== undefined && { capacity: b.capacity }),
+        ...(b.orderLimit   !== undefined && { orderLimit: b.orderLimit }),
+        ...(b.isOnSale     !== undefined && { isOnSale: b.isOnSale }),
+        ...(b.salesStart   !== undefined && { salesStart: b.salesStart ? new Date(b.salesStart) : null }),
+        ...(b.salesEnd     !== undefined && { salesEnd:   b.salesEnd   ? new Date(b.salesEnd)   : null }),
+        ...(b.perks        !== undefined && { perks: b.perks }),
+        ...(b.inviteCode   !== undefined && { inviteCode: b.inviteCode }),
+        ...(b.sortOrder    !== undefined && { sortOrder: b.sortOrder }),
+        ...(b.premiumRows  !== undefined && { premiumRows: b.premiumRows }),
+        ...(b.blockedSeats !== undefined && { blockedSeats: b.blockedSeats }),
+        ...(b.seatRows     !== undefined && { seatRows: b.seatRows }),
+        ...(b.seatCols     !== undefined && { seatCols: b.seatCols }),
+        ...(b.seatSections !== undefined && { seatSections: b.seatSections }),
       },
     });
     return updated;

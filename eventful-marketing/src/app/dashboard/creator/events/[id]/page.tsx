@@ -85,6 +85,14 @@ interface TicketType {
   sold: number;
   type: 'FREE' | 'PAID' | 'INVITE';
   description?: string;
+  hasSeating?: boolean;
+  seatRows?: number;
+  seatCols?: number;
+  orderLimit?: number;
+  salesStart?: string;
+  salesEnd?: string;
+  perks?: string[];
+  inviteCode?: string;
 }
 
 interface LineupMember {
@@ -1071,6 +1079,115 @@ function TabOverview({ event, onRefresh }: { event: EventDetail; onRefresh: () =
   );
 }
 
+// ─── SeatMapPanel ─────────────────────────────────────────────────────────────
+
+type SeatStatus = 'available' | 'held' | 'pending' | 'taken' | 'blocked';
+
+const SEAT_COLOR: Record<SeatStatus, string> = {
+  available: 'bg-emerald-100 hover:bg-emerald-200 text-emerald-700',
+  held:      'bg-amber-100 text-amber-700 cursor-default',
+  pending:   'bg-blue-100 text-blue-700 cursor-default',
+  taken:     'bg-slate-300 text-slate-600 cursor-default',
+  blocked:   'bg-red-100 text-red-400 cursor-default',
+};
+
+function SeatMapPanel({ eventId, tier, onClose }: {
+  eventId: string;
+  tier: TicketType;
+  onClose: () => void;
+}) {
+  const [toggling, setToggling] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data, isLoading } = useQuery<{ layout: { rows: number; cols: number }; seats: Record<string, SeatStatus> }>({
+    queryKey: ['seat-map', eventId, tier.id],
+    queryFn: async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}/tiers/${tier.id}/seats`, { headers: authHeaders() });
+      if (!res.ok) throw new Error('Failed to load seat map');
+      return res.json();
+    },
+    refetchInterval: 15_000,
+  });
+
+  async function toggleBlock(seat: string, currentStatus: SeatStatus) {
+    if (currentStatus === 'taken' || currentStatus === 'pending') return;
+    const shouldBlock = currentStatus !== 'blocked';
+    setToggling(seat);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}/tiers/${tier.id}/seats/block`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ seat, blocked: shouldBlock }),
+      });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); toast.error((e as { error?: string }).error ?? 'Failed'); return; }
+      queryClient.invalidateQueries({ queryKey: ['seat-map', eventId, tier.id] });
+    } finally {
+      setToggling(null);
+    }
+  }
+
+  const rows = data?.layout.rows ?? tier.seatRows ?? 0;
+  const cols = data?.layout.cols ?? tier.seatCols ?? 0;
+
+  const counts = data ? Object.values(data.seats).reduce((acc, s) => {
+    acc[s] = (acc[s] ?? 0) + 1; return acc;
+  }, {} as Record<string, number>) : {};
+
+  return (
+    <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs font-bold text-slate-700">Seat map — {tier.name}</p>
+        <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600">Close ×</button>
+      </div>
+
+      {/* Legend */}
+      <div className="mb-3 flex flex-wrap gap-3 text-[10px]">
+        {([['available','Available'], ['held','Held (10 min)'], ['pending','Pending payment'], ['taken','Taken'], ['blocked','Blocked']] as const).map(([s, label]) => (
+          <span key={s} className="flex items-center gap-1">
+            <span className={`inline-block h-3 w-3 rounded-sm ${SEAT_COLOR[s].split(' ')[0]}`} />
+            {label} {counts[s] ? `(${counts[s]})` : ''}
+          </span>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="flex h-24 items-center justify-center text-xs text-slate-400">Loading seat map…</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full">
+            {/* Stage label */}
+            <div className="mb-2 rounded bg-slate-200 py-1 text-center text-[10px] font-bold uppercase text-slate-500">Stage / Front</div>
+            {Array.from({ length: rows }, (_, r) => {
+              const rowLetter = String.fromCharCode(65 + r);
+              return (
+                <div key={rowLetter} className="mb-1 flex items-center gap-1">
+                  <span className="w-5 shrink-0 text-center text-[10px] font-bold text-slate-400">{rowLetter}</span>
+                  {Array.from({ length: cols }, (_, c) => {
+                    const label = `${rowLetter}${c + 1}`;
+                    const status: SeatStatus = data?.seats[label] ?? 'available';
+                    const canToggle = status === 'available' || status === 'blocked' || status === 'held';
+                    return (
+                      <button
+                        key={label}
+                        title={`${label}: ${status}${canToggle ? (status === 'blocked' ? ' — click to unblock' : ' — click to block') : ''}`}
+                        disabled={toggling === label || !canToggle}
+                        onClick={() => toggleBlock(label, status)}
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded text-[9px] font-bold transition ${SEAT_COLOR[status]} ${toggling === label ? 'opacity-50' : ''}`}>
+                        {c + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      <p className="mt-2 text-[10px] text-slate-400">Click an available/blocked seat to toggle blocking. Held/taken/pending seats cannot be modified here.</p>
+    </div>
+  );
+}
+
 // ─── TierFormModal ────────────────────────────────────────────────────────────
 
 function TierFormModal({ eventId, tier, onClose, onSaved }: {
@@ -1085,20 +1202,45 @@ function TierFormModal({ eventId, tier, onClose, onSaved }: {
   const [currency,    setCurrency]    = useState(tier?.currency ?? 'XAF');
   const [capacity,    setCapacity]    = useState(String(tier?.capacity ?? ''));
   const [description, setDescription] = useState(tier?.description ?? '');
+  const [orderLimit,  setOrderLimit]  = useState(String((tier as {orderLimit?: number})?.orderLimit ?? '10'));
+  const [salesStart,  setSalesStart]  = useState((tier as {salesStart?: string})?.salesStart?.slice(0, 16) ?? '');
+  const [salesEnd,    setSalesEnd]    = useState((tier as {salesEnd?: string})?.salesEnd?.slice(0, 16) ?? '');
+  const [inviteCode,  setInviteCode]  = useState((tier as {inviteCode?: string})?.inviteCode ?? '');
+  const [perks,       setPerks]       = useState<string[]>((tier as {perks?: string[]})?.perks ?? []);
+  const [perkInput,   setPerkInput]   = useState('');
+  const [hasSeating,  setHasSeating]  = useState((tier as {hasSeating?: boolean})?.hasSeating ?? false);
+  const [seatRows,    setSeatRows]    = useState(String((tier as {seatRows?: number})?.seatRows ?? ''));
+  const [seatCols,    setSeatCols]    = useState(String((tier as {seatCols?: number})?.seatCols ?? ''));
   const [saving,      setSaving]      = useState(false);
+
+  function addPerk() {
+    const p = perkInput.trim();
+    if (p && !perks.includes(p)) setPerks(prev => [...prev, p]);
+    setPerkInput('');
+  }
 
   async function save() {
     if (!name.trim()) { toast.error('Ticket name is required'); return; }
+    if (!capacity && !hasSeating) { toast.error('Quantity is required'); return; }
     setSaving(true);
     try {
+      const apiType = type === 'INVITE' ? 'INVITE_ONLY' : type;
       const body: Record<string, unknown> = {
         name:        name.trim(),
-        type,
+        type:        apiType,
         price:       type === 'FREE' ? 0 : Number(price),
         currency,
-        capacity:    capacity ? Number(capacity) : undefined,
+        capacity:    hasSeating ? (Number(seatRows) * Number(seatCols)) : (capacity ? Number(capacity) : 1),
         description: description.trim() || undefined,
+        orderLimit:  orderLimit ? Number(orderLimit) : 10,
         isOnSale:    true,
+        salesStart:  salesStart ? new Date(salesStart).toISOString() : undefined,
+        salesEnd:    salesEnd   ? new Date(salesEnd).toISOString()   : undefined,
+        perks:       perks.length > 0 ? perks : undefined,
+        inviteCode:  type === 'INVITE' ? (inviteCode.trim() || undefined) : undefined,
+        hasSeating,
+        ...(hasSeating && seatRows ? { seatRows: Number(seatRows) } : {}),
+        ...(hasSeating && seatCols ? { seatCols: Number(seatCols) } : {}),
       };
       const url    = tier
         ? `${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}/tiers/${tier.id}`
@@ -1120,47 +1262,131 @@ function TierFormModal({ eventId, tier, onClose, onSaved }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <h3 className="text-base font-extrabold text-slate-900">{tier ? 'Edit ticket type' : 'Add ticket type'}</h3>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
             <XIcon className="h-5 w-5" />
           </button>
         </div>
-        <div className="space-y-4 p-6">
-          {/* Type picker */}
-          <div className="grid grid-cols-3 gap-2">
-            {(['FREE', 'PAID', 'INVITE'] as const).map((t) => (
-              <button key={t} type="button" onClick={() => setType(t)}
-                className={`rounded-xl border py-2.5 text-xs font-bold transition ${type === t ? 'border-brand-400 bg-brand-50 text-brand-600' : 'border-slate-200 text-slate-600 hover:border-brand-200'}`}>
-                {t === 'FREE' ? 'Free' : t === 'PAID' ? 'Paid' : 'Invite Only'}
-              </button>
-            ))}
-          </div>
-          <Field label="Ticket name" required>
-            <input className={inputCls} placeholder="e.g. General Admission"
-              value={name} onChange={(e) => setName(e.target.value)} />
-          </Field>
-          {type === 'PAID' && (
-            <Field label="Price" required>
-              <div className="flex gap-2">
-                <select value={currency} onChange={(e) => setCurrency(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500">
-                  {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
-                </select>
-                <input type="number" min={0} className={inputCls} placeholder="0"
-                  value={price} onChange={(e) => setPrice(e.target.value)} />
-              </div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="space-y-4 p-6">
+            {/* Type picker */}
+            <div className="grid grid-cols-3 gap-2">
+              {(['FREE', 'PAID', 'INVITE'] as const).map((t) => (
+                <button key={t} type="button" onClick={() => setType(t)}
+                  className={`rounded-xl border py-2.5 text-xs font-bold transition ${type === t ? 'border-brand-400 bg-brand-50 text-brand-600' : 'border-slate-200 text-slate-600 hover:border-brand-200'}`}>
+                  {t === 'FREE' ? 'Free' : t === 'PAID' ? 'Paid' : 'Invite Only'}
+                </button>
+              ))}
+            </div>
+
+            <Field label="Ticket name" required>
+              <input className={inputCls} placeholder="e.g. General Admission"
+                value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
-          )}
-          <Field label="Quantity">
-            <input type="number" min={1} className={inputCls} placeholder="Leave blank for unlimited"
-              value={capacity} onChange={(e) => setCapacity(e.target.value)} />
-          </Field>
-          <Field label="Description">
-            <textarea rows={3} className={`${inputCls} resize-none`} placeholder="Optional details about this ticket"
-              value={description} onChange={(e) => setDescription(e.target.value)} />
-          </Field>
+
+            {type === 'PAID' && (
+              <Field label="Price" required>
+                <div className="flex gap-2">
+                  <select value={currency} onChange={(e) => setCurrency(e.target.value)}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-brand-500">
+                    {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                  <input type="number" min={0} className={inputCls} placeholder="0"
+                    value={price} onChange={(e) => setPrice(e.target.value)} />
+                </div>
+              </Field>
+            )}
+
+            {type === 'INVITE' && (
+              <Field label="Invite code" required>
+                <input className={inputCls} placeholder="Secret code buyers must enter"
+                  value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
+              </Field>
+            )}
+
+            {/* Assigned seating toggle */}
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Assigned seating</p>
+                <p className="text-xs text-slate-400">Buyers pick seats from a seat map</p>
+              </div>
+              <button type="button" onClick={() => setHasSeating(p => !p)}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${hasSeating ? 'bg-brand-500' : 'bg-slate-200'}`}>
+                <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${hasSeating ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {hasSeating ? (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Rows (A–Z)" required>
+                  <input type="number" min={1} max={26} className={inputCls} placeholder="e.g. 8"
+                    value={seatRows} onChange={(e) => setSeatRows(e.target.value)} />
+                </Field>
+                <Field label="Seats per row" required>
+                  <input type="number" min={1} className={inputCls} placeholder="e.g. 13"
+                    value={seatCols} onChange={(e) => setSeatCols(e.target.value)} />
+                </Field>
+                {seatRows && seatCols && (
+                  <p className="col-span-2 -mt-1 text-xs text-slate-400">
+                    {Number(seatRows) * Number(seatCols)} total seats (capacity auto-calculated)
+                  </p>
+                )}
+              </div>
+            ) : (
+              <Field label="Quantity (capacity)">
+                <input type="number" min={1} className={inputCls} placeholder="e.g. 200"
+                  value={capacity} onChange={(e) => setCapacity(e.target.value)} />
+              </Field>
+            )}
+
+            <Field label="Max tickets per order">
+              <input type="number" min={1} max={100} className={inputCls} placeholder="10"
+                value={orderLimit} onChange={(e) => setOrderLimit(e.target.value)} />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Sales start">
+                <input type="datetime-local" className={inputCls}
+                  value={salesStart} onChange={(e) => setSalesStart(e.target.value)} />
+              </Field>
+              <Field label="Sales end">
+                <input type="datetime-local" className={inputCls}
+                  value={salesEnd} onChange={(e) => setSalesEnd(e.target.value)} />
+              </Field>
+            </div>
+
+            <Field label="Description">
+              <textarea rows={2} className={`${inputCls} resize-none`} placeholder="Optional details about this ticket"
+                value={description} onChange={(e) => setDescription(e.target.value)} />
+            </Field>
+
+            {/* Perks */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600">Perks</label>
+              {perks.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {perks.map((p) => (
+                    <span key={p} className="flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+                      {p}
+                      <button type="button" onClick={() => setPerks(prev => prev.filter(x => x !== p))}
+                        className="text-brand-400 hover:text-brand-700">×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input className={inputCls} placeholder="e.g. Free drink"
+                  value={perkInput} onChange={(e) => setPerkInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPerk(); } }} />
+                <button type="button" onClick={addPerk}
+                  className="shrink-0 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-600 hover:border-brand-300 hover:text-brand-600">
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="border-t border-slate-100 px-6 py-4">
           <button onClick={save} disabled={saving}
@@ -1177,8 +1403,9 @@ function TierFormModal({ eventId, tier, onClose, onSaved }: {
 
 function TabTickets({ eventId }: { eventId: string }) {
   const queryClient = useQueryClient();
-  const [modalTier,  setModalTier]  = useState<TicketType | null | 'new'>(null);
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [modalTier,    setModalTier]    = useState<TicketType | null | 'new'>(null);
+  const [menuOpenId,   setMenuOpenId]   = useState<string | null>(null);
+  const [seatMapTierId, setSeatMapTierId] = useState<string | null>(null);
 
   const { data: tiers = MOCK_TICKET_TYPES } = useQuery<TicketType[]>({
     queryKey: ['event-tiers', eventId],
@@ -1245,6 +1472,13 @@ function TabTickets({ eventId }: { eventId: string }) {
                 </div>
               </div>
               <div className="flex shrink-0 gap-2">
+                {tier.hasSeating && (
+                  <button
+                    onClick={() => setSeatMapTierId(seatMapTierId === tier.id ? null : tier.id)}
+                    className={`rounded-lg border p-2 text-xs font-bold transition ${seatMapTierId === tier.id ? 'border-brand-400 bg-brand-50 text-brand-600' : 'border-slate-200 text-slate-400 hover:border-brand-300 hover:text-brand-600'}`}>
+                    Seats
+                  </button>
+                )}
                 <button
                   onClick={() => setModalTier(tier)}
                   className="rounded-lg border border-slate-200 p-2 text-slate-400 transition hover:border-brand-300 hover:text-brand-600">
@@ -1268,6 +1502,13 @@ function TabTickets({ eventId }: { eventId: string }) {
                 </div>
               </div>
             </div>
+            {seatMapTierId === tier.id && (
+              <SeatMapPanel
+                eventId={eventId}
+                tier={tier}
+                onClose={() => setSeatMapTierId(null)}
+              />
+            )}
           </div>
         );
       })}

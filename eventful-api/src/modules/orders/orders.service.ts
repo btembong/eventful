@@ -1,10 +1,15 @@
 import crypto from 'crypto';
 import prisma from '@/lib/prisma';
+import redis from '@/lib/redis';
 import { qrService } from '@/lib/qr';
 import { notificationsService } from '@/modules/notifications/notifications.service';
 
 function clientError(message: string, statusCode: number): Error {
   return Object.assign(new Error(message), { statusCode });
+}
+
+function holdKey(tierId: string, seat: string) {
+  return `seat:hold:${tierId}:${seat}`;
 }
 
 export interface CreateOrderParams {
@@ -15,6 +20,8 @@ export interface CreateOrderParams {
   buyerPhone?: string;
   userId?:     string;   // null = guest checkout
   inviteCode?: string;
+  seats?:      string[]; // seat labels for seating tiers, e.g. ["A3","A4"]
+  sessionId?:  string;   // used to validate Redis seat holds
 }
 
 export const ordersService = {
@@ -52,6 +59,34 @@ export const ordersService = {
     if (tier.type === 'INVITE_ONLY') {
       if (!params.inviteCode || params.inviteCode !== tier.inviteCode) {
         throw clientError('Invalid invite code', 403);
+      }
+    }
+
+    // 2b. Seating validation
+    const seats = params.seats ?? [];
+    if (tier.hasSeating) {
+      if (seats.length !== params.quantity) {
+        throw clientError(`Please select exactly ${params.quantity} seat${params.quantity > 1 ? 's' : ''}`, 422);
+      }
+      // Validate Redis holds belong to this session
+      if (params.sessionId) {
+        for (const seat of seats) {
+          const holder = await redis.get(holdKey(tier.id, seat));
+          if (!holder) {
+            throw clientError(`Seat hold for ${seat} has expired. Please select seats again.`, 409);
+          }
+          if (holder !== params.sessionId) {
+            throw clientError(`Seat ${seat} is held by another buyer`, 409);
+          }
+        }
+      }
+      // Check seats aren't already on a paid/pending ticket
+      const conflicting = await prisma.ticket.findMany({
+        where: { tierId: tier.id, seatLabel: { in: seats }, status: { notIn: ['CANCELLED', 'REFUNDED'] } },
+        select: { seatLabel: true },
+      });
+      if (conflicting.length > 0) {
+        throw clientError(`Seat(s) ${conflicting.map(c => c.seatLabel).join(', ')} already taken`, 409);
       }
     }
 
@@ -98,7 +133,7 @@ export const ordersService = {
         },
       });
 
-      // Create N tickets
+      // Create N tickets (one per seat for seating tiers)
       const tickets = [];
       for (let i = 0; i < params.quantity; i++) {
         const ticketId  = crypto.randomUUID();
@@ -112,6 +147,7 @@ export const ordersService = {
             eventeeId: params.userId ?? null,
             status:    isFree ? 'PAID' : 'PENDING_PAYMENT',
             qrPayload,
+            seatLabel: seats[i] ?? null,
           },
         });
         tickets.push(ticket);

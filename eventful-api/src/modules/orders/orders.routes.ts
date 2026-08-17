@@ -15,6 +15,8 @@ export default async function ordersRoutes(app: FastifyInstance) {
       buyerEmail:  string;
       buyerPhone?: string;
       inviteCode?: string;
+      seats?:      string[];
+      sessionId?:  string;
     };
   }>('/events/:id/orders', {
     schema: {
@@ -35,6 +37,8 @@ export default async function ordersRoutes(app: FastifyInstance) {
           buyerEmail: { type: 'string', format: 'email' },
           buyerPhone: { type: 'string' },
           inviteCode: { type: 'string' },
+          seats:      { type: 'array', items: { type: 'string' } },
+          sessionId:  { type: 'string' },
         },
       },
       response: {
@@ -61,6 +65,8 @@ export default async function ordersRoutes(app: FastifyInstance) {
       buyerPhone: req.body.buyerPhone,
       userId,
       inviteCode: req.body.inviteCode,
+      seats:      req.body.seats,
+      sessionId:  req.body.sessionId,
     });
 
     return reply.status(201).send(result);

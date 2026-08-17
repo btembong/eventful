@@ -150,6 +150,8 @@ model Event {
   shareSlug   String        @unique
   isCancelled Boolean       @default(false)
 
+  country     String?  // ISO-3166 alpha-2, e.g. "CM", "NG" — used for discovery filter
+
   // Publication state
   isPublished   Boolean  @default(false) // live at /e/[shareSlug]; buyers can purchase
   inDiscovery   Boolean  @default(false) // appears in public browse/search page
@@ -195,6 +197,15 @@ model TicketTier {
   inviteCode  String?   // required for INVITE_ONLY tiers
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
+
+  // ── Assigned seating ───────────────────────────────────────────────────
+  hasSeating   Boolean  @default(false) // true = buyers pick seats from a map
+  seatRows     Int?     // number of rows (A=1, B=2, …)
+  seatCols     Int?     // total seats per row (sum of all sections)
+  // sections: JSON array [{label:"Left",count:3},{label:"Center",count:7},{label:"Right",count:3}]
+  seatSections Json?
+  premiumRows  String[] // row letters that are premium, e.g. ["A","B","C"]
+  blockedSeats String[] // seat labels blocked by creator, e.g. ["A1","H13"]
 
   tickets Ticket[]
   orders  Order[]
@@ -244,6 +255,7 @@ model Ticket {
   eventee     User?        @relation(fields: [eventeeId], references: [id])
 
   status      TicketStatus @default(PENDING_PAYMENT)
+  seatLabel   String?      // e.g. "A3" — set for seating tiers, null for GA
   // HMAC(ticketId + eventId + QR_SIGNING_SECRET) — prevents forged codes
   qrPayload   String       @unique
   checkedInAt DateTime?

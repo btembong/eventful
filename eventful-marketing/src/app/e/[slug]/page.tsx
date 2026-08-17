@@ -636,6 +636,7 @@ export default async function EventPage({ params }: Props) {
               {/* Ticket selector */}
               {!event.isCancelled && (event.tiers.length > 0 || remaining > 0) && (
                 <TicketSelector
+                  eventId={event.id}
                   shareSlug={event.shareSlug}
                   tiers={event.tiers}
                   coverImageUrl={event.coverImageUrl}
