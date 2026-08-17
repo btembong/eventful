@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ShareRow from '@/components/ShareRow';
-import CheckoutModal from './CheckoutModal';
+import TicketSelector from './TicketSelector';
 import EventPageNav from './EventPageNav';
 import {
   TicketIcon, CalendarIcon, ClockIcon, MapPointIcon,
@@ -598,58 +598,9 @@ export default async function EventPage({ params }: Props) {
             <MetadataSection event={event} />
           </div>
 
-          {/* ── Col 3: Ticket types + CTA ───────────────────────────────── */}
+          {/* ── Col 3: Ticket selector ──────────────────────────────────── */}
           <div className="w-full lg:w-[300px] lg:shrink-0">
             <div className="sticky top-20 space-y-4">
-
-              {/* Ticket tiers */}
-              {!event.isCancelled && event.tiers.length > 0 && (
-                <div>
-                  <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ticket types</p>
-                  <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-                    {event.tiers.map((tier) => {
-                      const tierRemaining = tier.capacity - tier.sold;
-                      const soldOut = tierRemaining <= 0;
-                      return (
-                        <div key={tier.id} className={`px-4 py-4 transition hover:bg-brand-50/40 ${soldOut ? 'opacity-50' : ''}`}>
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-slate-900 truncate">{tier.name}</p>
-                              {tier.description && (
-                                <p className="mt-0.5 text-xs text-slate-400 line-clamp-2">{tier.description}</p>
-                              )}
-                              {tier.perks?.length > 0 && (
-                                <div className="mt-2 flex flex-wrap gap-1">
-                                  {tier.perks.slice(0, 3).map((p) => (
-                                    <span key={p} className="rounded-full bg-brand-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand-600">{p}</span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                            <div className="shrink-0 text-right">
-                              {tier.type === 'FREE' ? (
-                                <p className="text-sm font-extrabold text-brand-500">Free</p>
-                              ) : tier.type === 'INVITE_ONLY' ? (
-                                <p className="text-xs font-bold text-purple-600">Invite only</p>
-                              ) : (
-                                <p className="text-sm font-extrabold text-brand-500">
-                                  {Number(tier.price).toLocaleString()}
-                                  <span className="ml-1 text-[10px] font-normal text-slate-400">{tier.currency}</span>
-                                </p>
-                              )}
-                              {soldOut ? (
-                                <p className="text-[10px] font-bold text-red-400">Sold out</p>
-                              ) : (
-                                <p className="text-[10px] text-slate-400">{tierRemaining} left</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               {/* Capacity bar */}
               {!event.isCancelled && tickets > 0 && (
@@ -667,32 +618,35 @@ export default async function EventPage({ params }: Props) {
                 </div>
               )}
 
-              {/* CTA */}
-              {event.isCancelled ? (
+              {/* Cancelled state */}
+              {event.isCancelled && (
                 <div className="rounded-xl bg-red-50 py-4 text-center">
                   <p className="text-sm font-bold text-red-600">This event has been cancelled</p>
                 </div>
-              ) : remaining > 0 ? (
-                <div className="space-y-2">
-                  <CheckoutModal
-                    shareSlug={event.shareSlug}
-                    eventId={event.id}
-                    eventTitle={event.title}
-                    tiers={event.tiers}
-                  />
-                  <p className="text-center text-[11px] text-slate-400">Secure checkout · powered by Tranzak</p>
-                </div>
-              ) : (
+              )}
+
+              {/* Sold out (no tiers) */}
+              {!event.isCancelled && event.tiers.length === 0 && remaining <= 0 && (
                 <div>
                   <div className="w-full rounded-xl bg-slate-100 py-4 text-center text-sm font-bold text-slate-500">Sold out</div>
                   <p className="mt-2 text-center text-[11px] text-slate-400">Join the waitlist to be notified</p>
                 </div>
               )}
 
+              {/* Ticket selector */}
+              {!event.isCancelled && (event.tiers.length > 0 || remaining > 0) && (
+                <TicketSelector
+                  shareSlug={event.shareSlug}
+                  tiers={event.tiers}
+                  coverImageUrl={event.coverImageUrl}
+                  hasSeating={!!(event.metadata?.hasSeating)}
+                />
+              )}
+
               {/* Social proof */}
               {!event.isCancelled && (
                 <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-400" />
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
                   {viewCount} people viewed this today
                 </p>
               )}
