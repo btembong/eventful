@@ -33,6 +33,9 @@ const AuthContext = createContext<AuthContextType>({
   refreshAccessToken: async () => null,
 });
 
+// Module-level singleton so concurrent 401s share one refresh call
+let refreshPromise: Promise<string | null> | null = null;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser]     = useState<AuthUser | null>(null);
   const [token, setToken]   = useState<string | null>(null);
@@ -63,26 +66,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(accessToken);
   }, []);
 
-  const refreshAccessToken = useCallback(async (): Promise<string | null> => {
-    const refreshToken = localStorage.getItem('refresh_token');
-    if (!refreshToken) return null;
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ refreshToken }),
-      });
-      if (!res.ok) return null;
-      const data = await res.json();
-      const newToken = data.accessToken as string;
-      localStorage.setItem('access_token', newToken);
-      // Refresh the access_token cookie too
-      document.cookie = `access_token=${newToken}; path=/; max-age=${15 * 60}; SameSite=Lax`;
-      setToken(newToken);
-      return newToken;
-    } catch {
-      return null;
-    }
+  const refreshAccessToken = useCallback((): Promise<string | null> => {
+    // Return the in-flight promise if one is already running (mutex)
+    if (refreshPromise) return refreshPromise;
+
+    refreshPromise = (async () => {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (!refreshToken) return null;
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ refreshToken }),
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const newAccessToken  = data.accessToken  as string;
+        const newRefreshToken = data.refreshToken as string;
+        localStorage.setItem('access_token',  newAccessToken);
+        // Save the rotated refresh token — critical to avoid 401 on next expiry
+        if (newRefreshToken) {
+          localStorage.setItem('refresh_token', newRefreshToken);
+          document.cookie = `refresh_token=${newRefreshToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+        }
+        document.cookie = `access_token=${newAccessToken}; path=/; max-age=${15 * 60}; SameSite=Lax`;
+        setToken(newAccessToken);
+        return newAccessToken;
+      } catch {
+        return null;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+
+    return refreshPromise;
   }, []);
 
   const logout = useCallback(async () => {
