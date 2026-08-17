@@ -34,6 +34,7 @@ interface EventDetail {
   description: string;
   category: string;
   venue: string;
+  country?: string;
   startsAt: string;
   endsAt: string;
   price: string;
@@ -373,6 +374,18 @@ export default async function EventPage({ params }: Props) {
         <div className="pointer-events-none absolute right-6 bottom-6 lg:right-16">
           <catMeta.Icon className="h-28 w-28 text-white/[0.04] lg:h-36 lg:w-36" />
         </div>
+        {/* Eventful logo watermark — top right */}
+        <div className="pointer-events-none absolute right-4 top-4 flex items-center gap-1.5 opacity-30">
+          <svg width="20" height="20" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <path d="M8 12a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v6a3 3 0 0 0 0 4v6a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4v-6a3 3 0 0 0 0-4v-6z" fill="#F07200"/>
+            <rect x="13" y="18" width="14" height="4" rx="2" fill="white" opacity="0.9"/>
+            <circle cx="13" cy="13" r="2.5" fill="white" opacity="0.85"/>
+            <circle cx="27" cy="13" r="2.5" fill="white" opacity="0.85"/>
+            <circle cx="13" cy="27" r="2.5" fill="white" opacity="0.85"/>
+            <circle cx="27" cy="27" r="2.5" fill="white" opacity="0.85"/>
+          </svg>
+          <span className="text-xs font-extrabold tracking-tight text-white">eventful</span>
+        </div>
 
         <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
           {/* Breadcrumb */}
@@ -410,7 +423,7 @@ export default async function EventPage({ params }: Props) {
             {[
               { Icon: CalendarIcon,   text: fmtDateShort(event.startsAt) },
               { Icon: ClockIcon,      text: timeStr },
-              { Icon: MapPointIcon,   text: event.venue },
+              { Icon: MapPointIcon,   text: event.country ? `${event.venue}, ${event.country}` : event.venue },
               { Icon: UsersGroupIcon, text: `${event.capacity.toLocaleString()} capacity` },
             ].map(({ Icon, text }) => (
               <div key={text} className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/80 backdrop-blur-sm">

@@ -23,7 +23,7 @@ type NavItem = {
 
 const ATTENDEE_NAV: NavItem[] = [
   { href: '/dashboard',           label: 'My Tickets', shortLabel: 'Tickets',  Icon: TicketIcon,       exact: true },
-  { href: '/dashboard/discover',  label: 'Discover',   shortLabel: 'Discover', Icon: HomeIcon },
+  { href: '/events',               label: 'Discover',   shortLabel: 'Discover', Icon: HomeIcon },
   { href: '/dashboard/support',   label: 'Support',    shortLabel: 'Support',  Icon: CheckCircleIcon },
   { href: '/dashboard/settings',  label: 'Settings',   shortLabel: 'Settings', Icon: SettingsIcon },
 ];

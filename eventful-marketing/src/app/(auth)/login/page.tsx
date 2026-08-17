@@ -70,6 +70,9 @@ export default function LoginPage() {
       localStorage.setItem('access_token',  data.accessToken);
       localStorage.setItem('refresh_token', data.refreshToken);
       localStorage.setItem('user',          JSON.stringify(data.user));
+      // Mirror tokens to cookies so Next.js middleware can validate auth server-side
+      document.cookie = `access_token=${data.accessToken}; path=/; max-age=${15 * 60}; SameSite=Lax`;
+      document.cookie = `refresh_token=${data.refreshToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
 
       // Route based on role
       const roles: string[] = data.user?.roles ?? [];

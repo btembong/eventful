@@ -47,6 +47,51 @@ function Input({
   );
 }
 
+// ─── Password strength indicator ──────────────────────────────────────────────
+
+function getStrength(pw: string): { score: number; label: string; color: string } {
+  let score = 0;
+  if (pw.length >= 8)            score++;
+  if (/[A-Z]/.test(pw))          score++;
+  if (/[a-z]/.test(pw))          score++;
+  if (/[0-9]/.test(pw))          score++;
+  if (/[^A-Za-z0-9]/.test(pw))   score++;
+  if (score <= 2) return { score, label: 'Weak',   color: 'bg-red-400' };
+  if (score === 3) return { score, label: 'Fair',   color: 'bg-brand-400' };
+  if (score === 4) return { score, label: 'Good',   color: 'bg-brand-500' };
+  return              { score, label: 'Strong', color: 'bg-brand-600' };
+}
+
+function PasswordStrength({ password }: { password: string }) {
+  const { score, label, color } = getStrength(password);
+  return (
+    <div className="mt-2">
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= score ? color : 'bg-slate-100'}`}
+          />
+        ))}
+      </div>
+      <p className={`mt-1 text-[11px] font-semibold ${score <= 2 ? 'text-red-400' : score === 3 ? 'text-brand-400' : 'text-brand-600'}`}>
+        {label}
+        {score < 5 && (
+          <span className="ml-1 font-normal text-slate-400">
+            — add {[
+              !(/[A-Z]/.test(password)) && 'uppercase',
+              !(/[a-z]/.test(password)) && 'lowercase',
+              !(/[0-9]/.test(password)) && 'a number',
+              !(/[^A-Za-z0-9]/.test(password)) && 'a symbol',
+              password.length < 8 && '8+ chars',
+            ].filter(Boolean).join(', ')}
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SignupPage() {
@@ -64,11 +109,36 @@ export default function SignupPage() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!fullName.trim())     e.fullName = 'Name is required';
-    if (!email.trim())        e.email    = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Enter a valid email';
-    if (password.length < 8)  e.password = 'Minimum 8 characters';
-    if (confirm !== password)  e.confirm  = 'Passwords do not match';
+    if (!fullName.trim()) e.fullName = 'Name is required';
+
+    if (!email.trim()) e.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Enter a valid email address';
+
+    // Phone — optional, but if provided must be a valid international number
+    const phoneTrimmed = phone.trim();
+    if (phoneTrimmed) {
+      const phoneDigits = phoneTrimmed.replace(/[\s\-().]/g, '');
+      if (!/^\+?[1-9]\d{6,14}$/.test(phoneDigits)) {
+        e.phone = 'Enter a valid phone number (e.g. +237 6XX XXX XXX)';
+      }
+    }
+
+    // Strong password: min 8 chars, uppercase, lowercase, digit, special char
+    if (!password) {
+      e.password = 'Password is required';
+    } else if (password.length < 8) {
+      e.password = 'At least 8 characters required';
+    } else if (!/[A-Z]/.test(password)) {
+      e.password = 'Must include at least one uppercase letter (A–Z)';
+    } else if (!/[a-z]/.test(password)) {
+      e.password = 'Must include at least one lowercase letter (a–z)';
+    } else if (!/[0-9]/.test(password)) {
+      e.password = 'Must include at least one number (0–9)';
+    } else if (!/[^A-Za-z0-9]/.test(password)) {
+      e.password = 'Must include at least one special character (!@#$%…)';
+    }
+
+    if (confirm !== password) e.confirm = 'Passwords do not match';
     return e;
   }
 
@@ -216,6 +286,7 @@ export default function SignupPage() {
             <Field
               label="Phone number"
               hint="Optional — for SMS event reminders"
+              error={errors.phone}
             >
               <Input
                 type="tel"
@@ -223,6 +294,7 @@ export default function SignupPage() {
                 placeholder="+237 6XX XXX XXX"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                error={errors.phone}
               />
             </Field>
 
@@ -231,7 +303,7 @@ export default function SignupPage() {
                 <Input
                   type={showPw ? 'text' : 'password'}
                   autoComplete="new-password"
-                  placeholder="At least 8 characters"
+                  placeholder="Min 8 chars, uppercase, number, symbol"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   error={errors.password}
@@ -245,6 +317,10 @@ export default function SignupPage() {
                   {showPw ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                 </button>
               </div>
+              {/* Strength bar */}
+              {password.length > 0 && (
+                <PasswordStrength password={password} />
+              )}
             </Field>
 
             <Field label="Confirm password *" error={errors.confirm}>

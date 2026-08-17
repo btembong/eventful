@@ -134,13 +134,13 @@ export default async function HomePage() {
                 Live events near you
               </div>
 
-              <h1 className="mt-5 font-slackey text-4xl leading-[1.1] tracking-tight text-slate-900 sm:mt-6 sm:text-5xl lg:text-6xl xl:text-7xl">
-                One platform for every{' '}
-                <span className="gradient-text">great event.</span>
+              <h1 className="mt-5 text-4xl font-black leading-[1.05] tracking-tight text-slate-900 sm:mt-6 sm:text-5xl lg:text-6xl xl:text-7xl">
+                Africa&apos;s premier platform for{' '}
+                <span className="gradient-text">live events.</span>
               </h1>
 
-              <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-500 sm:mt-6 sm:text-lg">
-                Concerts. Theater. Sports. Festivals. Buy tickets in seconds, get a signed QR ticket, walk in — no printouts, no hassle.
+              <p className="mt-4 max-w-lg text-base font-medium leading-relaxed text-slate-600 sm:mt-6 sm:text-lg">
+                Concerts, theater, sports &amp; festivals — discover what&apos;s on, buy your ticket in seconds, and walk in with a signed QR code. No hassle.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3 sm:mt-10 sm:gap-4">

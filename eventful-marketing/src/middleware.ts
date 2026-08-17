@@ -47,3 +47,4 @@ export const config = {
     '/become-creator',
   ],
 };
+// Note: /privacy and /terms are public pages — no middleware needed
