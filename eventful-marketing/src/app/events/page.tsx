@@ -28,13 +28,36 @@ const CATEGORIES = [
 
 const PAGE_SIZE = 12;
 
+const COUNTRIES = [
+  { value: 'CM', label: 'Cameroon' },
+  { value: 'NG', label: 'Nigeria' },
+  { value: 'KE', label: 'Kenya' },
+  { value: 'GH', label: 'Ghana' },
+  { value: 'ZA', label: 'South Africa' },
+  { value: 'SN', label: 'Senegal' },
+  { value: 'CI', label: "Côte d'Ivoire" },
+  { value: 'ET', label: 'Ethiopia' },
+  { value: 'TZ', label: 'Tanzania' },
+  { value: 'UG', label: 'Uganda' },
+  { value: 'RW', label: 'Rwanda' },
+  { value: 'CD', label: 'DR Congo' },
+  { value: 'CG', label: 'Republic of Congo' },
+  { value: 'TG', label: 'Togo' },
+  { value: 'BJ', label: 'Benin' },
+  { value: 'ML', label: 'Mali' },
+  { value: 'BF', label: 'Burkina Faso' },
+  { value: 'MG', label: 'Madagascar' },
+  { value: 'MU', label: 'Mauritius' },
+];
+
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-async function fetchEvents(category?: string, q?: string, page = 1): Promise<ApiResponse> {
+async function fetchEvents(category?: string, q?: string, country?: string, page = 1): Promise<ApiResponse> {
   try {
     const params = new URLSearchParams({ limit: String(PAGE_SIZE), page: String(page) });
     if (category) params.set('category', category);
-    if (q) params.set('q', q);
+    if (q)        params.set('q', q);
+    if (country)  params.set('country', country);
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/events?${params.toString()}`,
       { next: { revalidate: 60 } },
@@ -58,16 +81,18 @@ function availInfo(capacity: number, sold: number) {
 }
 
 function buildHref(
-  base: { category?: string; q?: string; page?: number },
-  overrides: { category?: string | null; q?: string | null; page?: number },
+  base: { category?: string; q?: string; country?: string; page?: number },
+  overrides: { category?: string | null; q?: string | null; country?: string | null; page?: number },
 ): string {
   const p = new URLSearchParams();
-  const cat   = overrides.category !== undefined ? overrides.category : base.category;
-  const query = overrides.q       !== undefined ? overrides.q       : base.q;
-  const pg    = overrides.page ?? 1;
-  if (cat)   p.set('category', cat);
-  if (query) p.set('q', query);
-  if (pg > 1) p.set('page', String(pg));
+  const cat     = overrides.category !== undefined ? overrides.category : base.category;
+  const query   = overrides.q        !== undefined ? overrides.q        : base.q;
+  const country = overrides.country  !== undefined ? overrides.country  : base.country;
+  const pg      = overrides.page ?? 1;
+  if (cat)     p.set('category', cat);
+  if (query)   p.set('q', query);
+  if (country) p.set('country', country);
+  if (pg > 1)  p.set('page', String(pg));
   const qs = p.toString();
   return `/events${qs ? `?${qs}` : ''}`;
 }
@@ -161,15 +186,15 @@ function EventCard({ event }: { event: Event }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 interface Props {
-  searchParams: Promise<{ category?: string; q?: string; page?: string }>;
+  searchParams: Promise<{ category?: string; q?: string; country?: string; page?: string }>;
 }
 
 export default async function EventsPage({ searchParams }: Props) {
-  const { category, q, page: pageStr } = await searchParams;
+  const { category, q, country, page: pageStr } = await searchParams;
   const page       = Math.max(1, parseInt(pageStr ?? '1', 10));
-  const { events, total } = await fetchEvents(category, q, page);
+  const { events, total } = await fetchEvents(category, q, country, page);
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const base       = { category, q, page };
+  const base       = { category, q, country, page };
 
   const pagesToShow: number[] = [];
   const start = Math.max(1, page - 2);
@@ -214,10 +239,31 @@ export default async function EventsPage({ searchParams }: Props) {
             ))}
           </div>
 
-          {/* Row 2: search + result count */}
+          {/* Row 2: country picker + search + result count */}
           <div className="mt-3 flex items-center gap-2">
-            <form method="GET" action="/events" className="flex flex-1 items-center gap-2">
+            <form method="GET" action="/events" className="flex flex-1 items-center gap-2 flex-wrap sm:flex-nowrap">
               {category && <input type="hidden" name="category" value={category} />}
+
+              {/* ── Country selector ── */}
+              <div className="relative shrink-0">
+                <MapPointIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-500" />
+                <select
+                  name="country"
+                  defaultValue={country ?? ''}
+                  className="appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-8 text-sm font-semibold text-slate-700 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 cursor-pointer w-full sm:w-auto"
+                >
+                  <option value="">Country</option>
+                  {COUNTRIES.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+                {/* Custom chevron */}
+                <svg className="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 12 12">
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+
+              {/* ── Search ── */}
               <div className="relative flex-1 sm:flex-none">
                 <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -225,16 +271,17 @@ export default async function EventsPage({ searchParams }: Props) {
                   type="search"
                   defaultValue={q ?? ''}
                   placeholder="Search events…"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 sm:w-52"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 sm:w-48"
                 />
               </div>
+
               <button
                 type="submit"
                 className="shrink-0 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-brand-300 hover:text-brand-600"
               >
                 Go
               </button>
-              {(category || q) && (
+              {(category || q || country) && (
                 <Link
                   href="/events"
                   className="flex shrink-0 items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-500 transition hover:border-brand-200 hover:text-brand-600"

@@ -68,46 +68,50 @@ export default function TicketCard({
 
         {/* Stub section */}
         <div className="flex w-28 flex-col items-center justify-between bg-brand-900 px-3 py-6">
-          {/* QR placeholder */}
-          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-brand-950 p-1.5 ring-1 ring-brand-900">
-            <svg viewBox="0 0 100 100" className="h-full w-full">
-              <rect x="10" y="10" width="30" height="30" rx="3" fill="#A663CC" opacity="0.9"/>
-              <rect x="15" y="15" width="20" height="20" rx="2" fill="#171123"/>
-              <rect x="19" y="19" width="12" height="12" rx="1" fill="#c094e0"/>
-              <rect x="60" y="10" width="30" height="30" rx="3" fill="#A663CC" opacity="0.9"/>
-              <rect x="65" y="15" width="20" height="20" rx="2" fill="#171123"/>
-              <rect x="69" y="19" width="12" height="12" rx="1" fill="#c094e0"/>
-              <rect x="10" y="60" width="30" height="30" rx="3" fill="#A663CC" opacity="0.9"/>
-              <rect x="15" y="65" width="20" height="20" rx="2" fill="#171123"/>
-              <rect x="19" y="69" width="12" height="12" rx="1" fill="#c094e0"/>
-              <rect x="50" y="50" width="8" height="8" rx="1" fill="#A663CC" opacity="0.7"/>
-              <rect x="62" y="50" width="8" height="8" rx="1" fill="#A663CC" opacity="0.7"/>
-              <rect x="74" y="50" width="16" height="8" rx="1" fill="#A663CC" opacity="0.7"/>
-              <rect x="50" y="62" width="20" height="8" rx="1" fill="#A663CC" opacity="0.7"/>
-              <rect x="74" y="62" width="16" height="8" rx="1" fill="#A663CC" opacity="0.7"/>
-              <rect x="50" y="74" width="8" height="16" rx="1" fill="#A663CC" opacity="0.7"/>
-              <rect x="62" y="74" width="28" height="8" rx="1" fill="#A663CC" opacity="0.7"/>
-              <rect x="82" y="82" width="8" height="8" rx="1" fill="#A663CC" opacity="0.7"/>
+          {/* QR placeholder — brand colors matching real generated tickets */}
+          <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-white p-1.5 ring-1 ring-brand-800">
+            <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden="true">
+              {/* Top-left finder */}
+              <rect x="10" y="10" width="30" height="30" rx="3" fill="#333333"/>
+              <rect x="15" y="15" width="20" height="20" rx="2" fill="white"/>
+              <rect x="19" y="19" width="12" height="12" rx="1" fill="#333333"/>
+              {/* Top-right finder */}
+              <rect x="60" y="10" width="30" height="30" rx="3" fill="#333333"/>
+              <rect x="65" y="15" width="20" height="20" rx="2" fill="white"/>
+              <rect x="69" y="19" width="12" height="12" rx="1" fill="#333333"/>
+              {/* Bottom-left finder */}
+              <rect x="10" y="60" width="30" height="30" rx="3" fill="#333333"/>
+              <rect x="15" y="65" width="20" height="20" rx="2" fill="white"/>
+              <rect x="19" y="69" width="12" height="12" rx="1" fill="#333333"/>
+              {/* Data modules — orange accent */}
+              <rect x="50" y="50" width="8" height="8" rx="1" fill="#F07200" opacity="0.9"/>
+              <rect x="62" y="50" width="8" height="8" rx="1" fill="#333333"/>
+              <rect x="74" y="50" width="16" height="8" rx="1" fill="#F07200" opacity="0.8"/>
+              <rect x="50" y="62" width="20" height="8" rx="1" fill="#333333"/>
+              <rect x="74" y="62" width="16" height="8" rx="1" fill="#F07200" opacity="0.9"/>
+              <rect x="50" y="74" width="8" height="16" rx="1" fill="#333333"/>
+              <rect x="62" y="74" width="28" height="8" rx="1" fill="#F07200" opacity="0.7"/>
+              <rect x="82" y="82" width="8" height="8" rx="1" fill="#333333"/>
             </svg>
           </div>
 
           {/* ADMIT ONE rotated text */}
           <div className="flex flex-1 items-center justify-center py-3">
             <p
-              className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.25em] text-brand-600"
+              className="whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.25em] text-brand-400"
               style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
             >
               Admit One
             </p>
           </div>
 
-          {/* Barcode-style lines */}
+          {/* Barcode-style lines — orange + charcoal alternating */}
           <div className="flex h-8 w-16 items-end justify-center gap-px overflow-hidden rounded">
             {[3, 5, 2, 7, 4, 6, 3, 5, 2, 6, 4, 3, 7, 5, 4, 2].map((h, i) => (
               <div
                 key={i}
-                className="w-1 rounded-sm bg-brand-600"
-                style={{ height: `${h * 4}px` }}
+                style={{ height: `${h * 4}px`, backgroundColor: i % 3 === 0 ? '#F07200' : '#F07200cc' }}
+                className="w-1 rounded-sm"
               />
             ))}
           </div>
