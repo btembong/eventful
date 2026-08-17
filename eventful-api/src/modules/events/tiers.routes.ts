@@ -39,7 +39,7 @@ export default async function tiersRoutes(app: FastifyInstance) {
       perks?: string[]; inviteCode?: string; sortOrder?: number;
       // Seating
       hasSeating?: boolean; seatRows?: number; seatCols?: number;
-      seatSections?: unknown; premiumRows?: string[]; blockedSeats?: string[];
+      premiumRows?: string[]; blockedSeats?: string[];
     };
   }>('/:id/tiers', {
     schema: {
@@ -71,7 +71,6 @@ export default async function tiersRoutes(app: FastifyInstance) {
           hasSeating:   { type: 'boolean', default: false },
           seatRows:     { type: 'integer', minimum: 1, maximum: 26 },
           seatCols:     { type: 'integer', minimum: 1 },
-          seatSections: { },
           premiumRows:  { type: 'array', items: { type: 'string' } },
           blockedSeats: { type: 'array', items: { type: 'string' } },
         },
@@ -113,7 +112,6 @@ export default async function tiersRoutes(app: FastifyInstance) {
         hasSeating:   b.hasSeating ?? false,
         seatRows:     b.hasSeating ? (b.seatRows ?? null) : null,
         seatCols:     b.hasSeating ? (b.seatCols ?? null) : null,
-        seatSections: b.hasSeating ? (b.seatSections ?? null) : null,
         premiumRows:  b.hasSeating ? (b.premiumRows ?? []) : [],
         blockedSeats: b.hasSeating ? (b.blockedSeats ?? []) : [],
       },
@@ -131,7 +129,7 @@ export default async function tiersRoutes(app: FastifyInstance) {
       perks?: string[]; inviteCode?: string | null; sortOrder?: number;
       // Seating
       premiumRows?: string[]; blockedSeats?: string[];
-      seatRows?: number; seatCols?: number; seatSections?: unknown;
+      seatRows?: number; seatCols?: number;
     };
   }>('/:id/tiers/:tierId', {
     schema: {
@@ -164,7 +162,6 @@ export default async function tiersRoutes(app: FastifyInstance) {
           blockedSeats: { type: 'array', items: { type: 'string' } },
           seatRows:     { type: 'integer', minimum: 1, maximum: 26 },
           seatCols:     { type: 'integer', minimum: 1 },
-          seatSections: { },
         },
       },
     },
@@ -201,7 +198,6 @@ export default async function tiersRoutes(app: FastifyInstance) {
         ...(b.blockedSeats !== undefined && { blockedSeats: b.blockedSeats }),
         ...(b.seatRows     !== undefined && { seatRows: b.seatRows }),
         ...(b.seatCols     !== undefined && { seatCols: b.seatCols }),
-        ...(b.seatSections !== undefined && { seatSections: b.seatSections }),
       },
     });
     return updated;

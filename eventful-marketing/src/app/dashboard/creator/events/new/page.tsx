@@ -29,6 +29,8 @@ interface TierDraft {
   _id: string; name: string; type: TierType;
   price: string; currency: string; capacity: string;
   orderLimit: string; description: string; perks: string[]; inviteCode: string;
+  hasSeating: boolean; seatRows: string; seatCols: string;
+  salesStart: string; salesEnd: string;
 }
 
 interface WizardData {
@@ -181,7 +183,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 }
 
 function newTier(): TierDraft {
-  return { _id: crypto.randomUUID(), name: '', type: 'PAID', price: '', currency: 'XAF', capacity: '', orderLimit: '10', description: '', perks: [], inviteCode: '' };
+  return { _id: crypto.randomUUID(), name: '', type: 'PAID', price: '', currency: 'XAF', capacity: '', orderLimit: '10', description: '', perks: [], inviteCode: '', hasSeating: false, seatRows: '', seatCols: '', salesStart: '', salesEnd: '' };
 }
 
 // ─── Ticket SVG ────────────────────────────────────────────────────────────
@@ -973,10 +975,19 @@ function TierModal({ initial, onSave, onClose }: { initial?: TierDraft; onSave: 
     const errs: Partial<Record<keyof TierDraft, string>> = {};
     if (!tier.name.trim()) errs.name = 'Name is required';
     if (tier.type === 'PAID' && (!tier.price || Number(tier.price) <= 0)) errs.price = 'Enter a price > 0';
-    if (!tier.capacity || Number(tier.capacity) < 1) errs.capacity = 'Capacity must be ≥ 1';
+    if (tier.hasSeating) {
+      if (!tier.seatRows || Number(tier.seatRows) < 1) errs.seatRows = 'Rows required';
+      if (!tier.seatCols || Number(tier.seatCols) < 1) errs.seatCols = 'Cols required';
+    } else {
+      if (!tier.capacity || Number(tier.capacity) < 1) errs.capacity = 'Capacity must be ≥ 1';
+    }
     if (tier.type === 'INVITE_ONLY' && !tier.inviteCode.trim()) errs.inviteCode = 'Invite code required';
     if (Object.keys(errs).length) { setErrors(errs); return; }
-    onSave(tier);
+    // Auto-set capacity from seat grid
+    const finalTier = tier.hasSeating
+      ? { ...tier, capacity: String(Number(tier.seatRows) * Number(tier.seatCols)) }
+      : tier;
+    onSave(finalTier);
   }
 
   // ── Step 0 — ticket kind selector ───────────────────────────────────────
@@ -1114,14 +1125,63 @@ function TierModal({ initial, onSave, onClose }: { initial?: TierDraft; onSave: 
             </div>
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Quantity" required error={errors.capacity} hint="Total tickets in this tier">
-              <input type="number" min="1" className={inputCls} placeholder="e.g. 500"
-                value={tier.capacity} onChange={(e) => setF('capacity', e.target.value)} />
-            </Field>
+          {/* Assigned seating toggle */}
+          <div className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Assigned seating</p>
+              <p className="text-xs text-slate-400">Buyers pick seats from a seat map</p>
+            </div>
+            <button type="button" onClick={() => setF('hasSeating', !tier.hasSeating)}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${tier.hasSeating ? 'bg-brand-500' : 'bg-slate-200'}`}>
+              <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${tier.hasSeating ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          {tier.hasSeating ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Rows (A–Z)" required>
+                <input type="number" min={1} max={26} className={inputCls} placeholder="e.g. 8"
+                  value={tier.seatRows} onChange={(e) => setF('seatRows', e.target.value)} />
+              </Field>
+              <Field label="Seats per row" required>
+                <input type="number" min={1} className={inputCls} placeholder="e.g. 13"
+                  value={tier.seatCols} onChange={(e) => setF('seatCols', e.target.value)} />
+              </Field>
+              {tier.seatRows && tier.seatCols && (
+                <p className="col-span-2 -mt-1 text-xs text-slate-400">
+                  {Number(tier.seatRows) * Number(tier.seatCols)} total seats (capacity auto-calculated)
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Quantity" required error={errors.capacity} hint="Total tickets in this tier">
+                <input type="number" min="1" className={inputCls} placeholder="e.g. 500"
+                  value={tier.capacity} onChange={(e) => setF('capacity', e.target.value)} />
+              </Field>
+              <Field label="Max per order" hint="Per buyer limit">
+                <input type="number" min="1" max="20" className={inputCls} placeholder="10"
+                  value={tier.orderLimit} onChange={(e) => setF('orderLimit', e.target.value)} />
+              </Field>
+            </div>
+          )}
+
+          {tier.hasSeating && (
             <Field label="Max per order" hint="Per buyer limit">
               <input type="number" min="1" max="20" className={inputCls} placeholder="10"
                 value={tier.orderLimit} onChange={(e) => setF('orderLimit', e.target.value)} />
+            </Field>
+          )}
+
+          {/* Sales window */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Sales start">
+              <input type="datetime-local" className={inputCls}
+                value={tier.salesStart} onChange={(e) => setF('salesStart', e.target.value)} />
+            </Field>
+            <Field label="Sales end">
+              <input type="datetime-local" className={inputCls}
+                value={tier.salesEnd} onChange={(e) => setF('salesEnd', e.target.value)} />
             </Field>
           </div>
 
@@ -1425,10 +1485,18 @@ export default function NewEventPage() {
           body: JSON.stringify({
             name: tier.name, type: tier.type,
             price: tier.type === 'FREE' ? 0 : Number(tier.price),
-            currency: tier.currency, capacity: Number(tier.capacity),
+            currency: tier.currency,
+            capacity: tier.hasSeating
+              ? Number(tier.seatRows) * Number(tier.seatCols)
+              : Number(tier.capacity),
             orderLimit: Number(tier.orderLimit) || 10,
             description: tier.description || undefined,
             perks: tier.perks, inviteCode: tier.inviteCode || undefined,
+            hasSeating: tier.hasSeating,
+            ...(tier.hasSeating && tier.seatRows ? { seatRows: Number(tier.seatRows) } : {}),
+            ...(tier.hasSeating && tier.seatCols ? { seatCols: Number(tier.seatCols) } : {}),
+            salesStart: tier.salesStart ? new Date(tier.salesStart).toISOString() : undefined,
+            salesEnd:   tier.salesEnd   ? new Date(tier.salesEnd).toISOString()   : undefined,
           }),
         });
       }
