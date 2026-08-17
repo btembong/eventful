@@ -583,7 +583,7 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creating, canContact, event, selectedTiers, qty, firstName, lastName, email, phone, countryCode, promo, apiFetch]);
 
-  const handleCheckPayment = useCallback(async () => {
+  const handleCheckPayment = useCallback(async (retries = 0) => {
     if (!orderId) return;
     setError('');
     try {
@@ -593,8 +593,11 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
         if (d.status === 'PAID') {
           setOrderSuccess(true);
           toast.success('Payment confirmed! Your tickets are on the way.');
+        } else if (retries < 4) {
+          // Webhook may not have arrived yet — retry up to 4 times (2s apart)
+          setTimeout(() => handleCheckPayment(retries + 1), 2000);
         } else {
-          setError('Payment not confirmed yet. Please complete payment and try again.');
+          setError('Payment not confirmed yet. Please try again or click the button below.');
         }
       }
     } catch { /* ignore */ }
