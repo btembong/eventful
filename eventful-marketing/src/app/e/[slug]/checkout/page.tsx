@@ -600,6 +600,15 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
     } catch { /* ignore */ }
   }, [orderId, apiFetch]);
 
+  // Listen for payment-complete postMessage from /payment/return iframe page
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.data?.type === 'tranzak-complete') handleCheckPayment();
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [handleCheckPayment]);
+
   // ── Render ───────────────────────────────────────────────────────────────────
 
   if (loading) return <LoadingScreen />;
@@ -975,11 +984,11 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
                 {/* Paid — show iframe */}
                 {paymentRequired && !orderSuccess && paymentUrl && (
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
-                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-blue-500">
+                    <div className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3">
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-brand-500">
                         <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
                       </svg>
-                      <p className="text-xs font-medium text-blue-700">Secure payment powered by Tranzak. Do not close this page.</p>
+                      <p className="text-xs font-medium text-brand-700">Secure payment powered by Tranzak. Do not close this page.</p>
                     </div>
                     <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
                       <iframe
@@ -1075,7 +1084,7 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
                     disabled={!canContact || creating}
                     className="flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 disabled:opacity-40"
                   >
-                    {creating && <ThinkingOrb state="breathing" size={18} theme="dark" />}
+                    {creating && <ThinkingOrb state="breathing" size={20} theme="dark" />}
                     {creating ? 'Processing…' : 'Pay now'}
                   </button>
                 )}
@@ -1095,26 +1104,26 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
 function SuccessCard({ email, slug, paid }: { email: string; slug: string; paid: boolean }) {
   return (
     <div
-      className="flex flex-col items-center gap-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-14 text-center"
+      className="flex flex-col items-center gap-5 rounded-2xl border border-brand-200 bg-brand-50 px-6 py-14 text-center"
       style={{ animation: 'ticketPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both' }}
     >
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 shadow-sm">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-8 w-8 text-emerald-600">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0" />
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 shadow-sm shadow-brand-500/20">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-8 w-8 text-brand-600">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
         </svg>
       </div>
       <div>
-        <p className="text-lg font-extrabold text-emerald-800">
-          {paid ? 'Payment confirmed!' : "You're registered!"}
+        <p className="text-lg font-extrabold text-brand-900">
+          {paid ? 'Payment confirmed! 🎉' : "You're in! 🎉"}
         </p>
-        <p className="mt-1.5 text-sm text-emerald-600">
-          Your tickets have been sent to <strong>{email}</strong>
+        <p className="mt-1.5 text-sm text-brand-700">
+          Your ticket{paid ? 's are' : ' is'} confirmed for <strong>{email}</strong>
         </p>
-        <p className="mt-1 text-xs text-emerald-500">Check your inbox (and spam folder) for your QR code.</p>
+        <p className="mt-1 text-xs text-brand-500">Check your inbox (and spam folder) for your QR code.</p>
       </div>
       <Link
         href={`/e/${slug}`}
-        className="mt-1 rounded-xl bg-emerald-600 px-8 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500"
+        className="mt-1 rounded-xl bg-brand-600 px-8 py-3 text-sm font-bold text-white shadow-sm shadow-brand-600/25 transition hover:bg-brand-500"
       >
         Back to event
       </Link>

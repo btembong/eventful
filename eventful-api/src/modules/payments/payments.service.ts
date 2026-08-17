@@ -24,7 +24,7 @@ export const paymentsService = {
       currencyCode: currency,
       description: `Eventful order ${orderId}`,
       mchTransactionRef: payment.id,
-      returnUrl: `${env.APP_BASE_URL}/orders/${orderId}/confirm`,
+      returnUrl: `${env.APP_BASE_URL}/payment/return?orderId=${orderId}`,
     });
 
     // Replace the placeholder with the real Tranzak requestId
@@ -113,10 +113,10 @@ export const paymentsService = {
       return payment;
     });
 
-    // Schedule receipt + reminders for each ticket (authenticated buyers only)
+    // Schedule receipt for all buyers (including guests); reminders for authenticated only
     for (const ticket of payment.order.tickets) {
+      await notificationsService.scheduleReceipt(ticket.id, ticket.eventeeId ?? '');
       if (ticket.eventeeId) {
-        await notificationsService.scheduleReceipt(ticket.id, ticket.eventeeId);
         await notificationsService.scheduleReminders(ticket.id, payment.eventId);
       }
     }

@@ -185,11 +185,11 @@ export const ordersService = {
       paymentUrl = await paymentsService.initializeTransaction(order.id, totalAmount, currency);
     }
 
-    // Schedule receipt + reminders for authenticated buyers of free tickets
-    if (isFree && params.userId) {
+    // Schedule receipt + reminders for free tickets (all buyers, including guests)
+    if (isFree) {
       for (const ticket of tickets) {
-        await notificationsService.scheduleReceipt(ticket.id, params.userId);
-        await notificationsService.scheduleReminders(ticket.id, eventId);
+        await notificationsService.scheduleReceipt(ticket.id, params.userId ?? '');
+        if (params.userId) await notificationsService.scheduleReminders(ticket.id, eventId);
       }
     }
 
