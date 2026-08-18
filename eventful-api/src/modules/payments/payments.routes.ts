@@ -39,12 +39,12 @@ export default async function paymentsRoutes(app: FastifyInstance) {
       },
     },
   }, async (req, reply) => {
+    req.log.info({ body: req.body }, '[webhook] Tranzak payload received');
     try {
       await paymentsService.handleWebhook(req.body);
+      req.log.info('[webhook] Tranzak payload processed OK');
     } catch (err) {
-      // Log but do not surface errors to Tranzak — always ack with 200
-      // so Tranzak doesn't retry a webhook that failed for an auth/logic reason.
-      req.log.error({ err }, 'Webhook processing error');
+      req.log.error({ err, body: req.body }, '[webhook] Tranzak processing error');
     }
     return reply.send({ received: true });
   });

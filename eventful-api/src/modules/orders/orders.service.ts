@@ -219,6 +219,63 @@ export const ordersService = {
     return order;
   },
 
+  /**
+   * Manually verify a PENDING paid order by calling Tranzak directly.
+   * Used when the webhook was missed or delayed.
+   * Safe to call repeatedly — idempotent if already PAID.
+   */
+  async verifyPayment(orderId: string) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        tickets: { select: { id: true, eventeeId: true } },
+        payment: { select: { id: true, status: true, tranzakRequestId: true } },
+      },
+    });
+    if (!order) throw clientError('Order not found', 404);
+    if (order.status === 'PAID') return { status: 'PAID', alreadyPaid: true };
+    if (!order.payment) throw clientError('No payment record for this order', 400);
+    if (order.payment.status === 'success') return { status: 'PAID', alreadyPaid: true };
+
+    const tranzakRequestId = order.payment.tranzakRequestId;
+    if (!tranzakRequestId || tranzakRequestId.startsWith('_pending_')) {
+      throw clientError('Payment not yet initialized with Tranzak', 400);
+    }
+
+    const { tranzakClient } = await import('@/lib/tranzak');
+    const details = await tranzakClient.getPaymentDetails(tranzakRequestId);
+    if (details.status !== 'SUCCESSFUL') {
+      return { status: details.status, alreadyPaid: false };
+    }
+
+    const feePct = (await import('@/config/env')).default.PLATFORM_FEE_PCT;
+    const paidAt = new Date(details.transactionTime ?? Date.now());
+
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: order.payment!.id },
+        data: { status: 'success', paidAt, platformFee: (parseFloat(order.totalAmount.toString()) * feePct / 100).toFixed(2) },
+      });
+      await tx.ticket.updateMany({ where: { orderId }, data: { status: 'PAID' } });
+      await tx.order.update({ where: { id: orderId }, data: { status: 'PAID', paidAt } });
+      await tx.auditLog.create({
+        data: {
+          actorId: null,
+          action: 'payment.verified.manual',
+          entityType: 'Payment',
+          entityId: order.payment!.id,
+          meta: { orderId, tranzakRequestId, triggeredBy: 'verify-endpoint' },
+        },
+      });
+    });
+
+    for (const ticket of order.tickets) {
+      await notificationsService.scheduleReceipt(ticket.id, ticket.eventeeId ?? '');
+    }
+
+    return { status: 'PAID', alreadyPaid: false };
+  },
+
   async getUserOrders(userId: string) {
     return prisma.order.findMany({
       where: { userId },

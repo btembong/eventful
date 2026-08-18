@@ -106,6 +106,22 @@ export default async function ordersRoutes(app: FastifyInstance) {
     return ordersService.getUserOrders(req.user!.id);
   });
 
+  // POST /orders/:orderId/verify — manually verify payment with Tranzak (no auth — UUID is the secret)
+  app.post<{ Params: { orderId: string } }>('/orders/:orderId/verify', {
+    schema: {
+      tags: ['Orders'],
+      summary: 'Verify payment status directly with Tranzak and mark order PAID if confirmed',
+      params: {
+        type: 'object',
+        required: ['orderId'],
+        properties: { orderId: { type: 'string', format: 'uuid' } },
+      },
+    },
+  }, async (req, reply) => {
+    const result = await ordersService.verifyPayment(req.params.orderId);
+    return reply.send(result);
+  });
+
   // GET /orders/mine — alias for /users/me/orders (used by attendee support UI)
   app.get('/orders/mine', {
     schema: {
