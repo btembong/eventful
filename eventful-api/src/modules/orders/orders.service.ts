@@ -270,7 +270,11 @@ export const ordersService = {
     });
 
     for (const ticket of order.tickets) {
-      await notificationsService.scheduleReceipt(ticket.id, ticket.eventeeId ?? '');
+      try {
+        await notificationsService.scheduleReceipt(ticket.id, ticket.eventeeId ?? '');
+      } catch (e) {
+        console.error('[verifyPayment] Failed to schedule receipt for ticket', ticket.id, e);
+      }
     }
 
     return { status: 'PAID', alreadyPaid: false };
