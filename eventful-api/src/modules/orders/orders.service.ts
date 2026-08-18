@@ -233,9 +233,14 @@ export const ordersService = {
       },
     });
     if (!order) throw clientError('Order not found', 404);
-    if (order.status === 'PAID') return { status: 'PAID', alreadyPaid: true };
+    // Already PAID — re-queue receipts in case they were missed, then return
+    if (order.status === 'PAID' || order.payment?.status === 'success') {
+      for (const ticket of order.tickets) {
+        try { await notificationsService.scheduleReceipt(ticket.id, ticket.eventeeId ?? ''); } catch { /* ignore */ }
+      }
+      return { status: 'PAID', alreadyPaid: true };
+    }
     if (!order.payment) throw clientError('No payment record for this order', 400);
-    if (order.payment.status === 'success') return { status: 'PAID', alreadyPaid: true };
 
     const tranzakRequestId = order.payment.tranzakRequestId;
     if (!tranzakRequestId || tranzakRequestId.startsWith('_pending_')) {
