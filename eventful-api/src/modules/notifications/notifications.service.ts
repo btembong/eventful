@@ -116,6 +116,73 @@ export const notificationsService = {
     );
   },
 
+  /**
+   * Send a receipt email directly without going through BullMQ.
+   * Use this in payment confirmation flows where immediate delivery is required
+   * and the BullMQ worker may not be reliable (e.g., free-tier server sleeping).
+   */
+  async sendReceiptDirectly(ticketId: string): Promise<void> {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        eventee: { select: { email: true, fullName: true } },
+        order:   { select: { buyerName: true, buyerEmail: true } },
+        event:   { select: { id: true, title: true, venue: true, startsAt: true, price: true, currency: true, confirmationMessage: true } },
+      },
+    });
+
+    if (!ticket || ticket.status === 'CANCELLED') return;
+
+    const recipientEmail = ticket.eventee?.email ?? ticket.order?.buyerEmail;
+    const recipientName  = ticket.eventee?.fullName ?? ticket.order?.buyerName ?? 'Guest';
+    if (!recipientEmail) return;
+
+    try {
+      const { qrService }          = await import('@/lib/qr');
+      const { generateTicketPdf }  = await import('@/lib/ticket-pdf');
+      const { tplReceipt }         = await import('@/modules/notifications/email-templates');
+
+      const qrPayload   = qrService.sign(ticket.id, ticket.event.id);
+      const qrPngBuffer = await qrService.generatePng(qrPayload);
+      const qrBase64    = qrPngBuffer.toString('base64');
+
+      const pdfBuffer = await generateTicketPdf({
+        fullName:            recipientName,
+        eventTitle:          ticket.event.title,
+        venue:               ticket.event.venue,
+        startsAt:            ticket.event.startsAt,
+        price:               ticket.event.price.toString(),
+        currency:            ticket.event.currency,
+        ticketId:            ticket.id,
+        qrPngBuffer,
+        confirmationMessage: ticket.event.confirmationMessage ?? undefined,
+      });
+
+      await notificationsService.sendEmail(
+        recipientEmail,
+        `Your ticket for "${ticket.event.title}" is confirmed`,
+        tplReceipt({
+          fullName:            recipientName,
+          eventTitle:          ticket.event.title,
+          venue:               ticket.event.venue,
+          startsAt:            ticket.event.startsAt,
+          price:               ticket.event.price.toString(),
+          currency:            ticket.event.currency,
+          ticketId:            ticket.id,
+          qrBase64,
+          confirmationMessage: ticket.event.confirmationMessage ?? undefined,
+        }),
+        [{ content: pdfBuffer.toString('base64'), name: `ticket-${ticket.id.split('-')[0]}.pdf` }],
+      );
+
+      console.info(`[notifications] Receipt sent directly to ${recipientEmail} for ticket ${ticketId}`);
+    } catch (err) {
+      console.error(`[notifications] Direct receipt failed for ticket ${ticketId}:`, (err as Error).message);
+      // Fall back to BullMQ queue so it retries
+      await receiptsQueue.add('receipt', { ticketId, userId: ticket.eventeeId ?? '' }, { jobId: `receipt:${ticketId}:retry` });
+    }
+  },
+
   // ─── Email delivery ─────────────────────────────────────────────────────────
 
   async sendEmail(

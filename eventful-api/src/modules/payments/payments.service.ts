@@ -113,9 +113,14 @@ export const paymentsService = {
       return payment;
     });
 
-    // Schedule receipt for all buyers (including guests); reminders for authenticated only
+    // Send receipts directly (not via BullMQ) to avoid queue processing delays.
+    // Reminders still go through BullMQ as they need delayed scheduling.
     for (const ticket of payment.order.tickets) {
-      await notificationsService.scheduleReceipt(ticket.id, ticket.eventeeId ?? '');
+      try {
+        await notificationsService.sendReceiptDirectly(ticket.id);
+      } catch (e) {
+        console.error('[webhook] Failed to send receipt for ticket', ticket.id, (e as Error).message);
+      }
       if (ticket.eventeeId) {
         await notificationsService.scheduleReminders(ticket.id, payment.eventId);
       }

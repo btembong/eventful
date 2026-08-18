@@ -236,7 +236,7 @@ export const ordersService = {
     // Already PAID — re-queue receipts in case they were missed, then return
     if (order.status === 'PAID' || order.payment?.status === 'success') {
       for (const ticket of order.tickets) {
-        try { await notificationsService.scheduleReceipt(ticket.id, ticket.eventeeId ?? ''); } catch { /* ignore */ }
+        try { await notificationsService.sendReceiptDirectly(ticket.id); } catch { /* ignore */ }
       }
       return { status: 'PAID', alreadyPaid: true };
     }
@@ -276,9 +276,9 @@ export const ordersService = {
 
     for (const ticket of order.tickets) {
       try {
-        await notificationsService.scheduleReceipt(ticket.id, ticket.eventeeId ?? '');
+        await notificationsService.sendReceiptDirectly(ticket.id);
       } catch (e) {
-        console.error('[verifyPayment] Failed to schedule receipt for ticket', ticket.id, e);
+        console.error('[verifyPayment] Failed to send receipt for ticket', ticket.id, e);
       }
     }
 
