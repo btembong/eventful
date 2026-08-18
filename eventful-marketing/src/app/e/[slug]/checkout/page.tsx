@@ -587,14 +587,17 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
     if (!orderId) return;
     setError('');
     try {
-      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`);
+      // On first call, ask the API to verify directly with Tranzak (fixes missed webhooks)
+      if (retries === 0) {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/verify`, { method: 'POST' });
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`);
       if (res.ok) {
         const d = await res.json() as { status?: string };
         if (d.status === 'PAID') {
           setOrderSuccess(true);
           toast.success('Payment confirmed! Your tickets are on the way.');
-        } else if (retries < 4) {
-          // Webhook may not have arrived yet — retry up to 4 times (2s apart)
+        } else if (retries < 3) {
           setTimeout(() => handleCheckPayment(retries + 1), 2000);
         } else {
           setError('Payment not confirmed yet. Please try again or click the button below.');
