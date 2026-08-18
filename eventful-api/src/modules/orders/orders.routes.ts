@@ -87,7 +87,13 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const order = await import('@/lib/prisma').then(({ default: p }) =>
       p.order.findUnique({
         where: { id: req.params.orderId },
-        select: { id: true, status: true, totalAmount: true, currency: true, quantity: true, createdAt: true },
+        select: {
+          id: true, status: true, totalAmount: true, currency: true, quantity: true, createdAt: true,
+          buyerName: true, buyerEmail: true,
+          event: { select: { title: true, startsAt: true, venue: true, shareSlug: true } },
+          tier:  { select: { name: true, type: true } },
+          tickets: { select: { id: true, status: true } },
+        },
       }),
     );
     if (!order) return reply.status(404).send({ message: 'Order not found' });
