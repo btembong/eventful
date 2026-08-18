@@ -106,6 +106,94 @@ export default async function ordersRoutes(app: FastifyInstance) {
     return ordersService.getUserOrders(req.user!.id);
   });
 
+  // POST /orders/:orderId/resend-receipt — directly send receipt email, bypassing BullMQ (debug/recovery)
+  app.post<{ Params: { orderId: string } }>('/orders/:orderId/resend-receipt', {
+    schema: {
+      tags: ['Orders'],
+      summary: 'Force-send receipt email for all tickets in a PAID order (no auth — UUID is the secret)',
+      params: {
+        type: 'object',
+        required: ['orderId'],
+        properties: { orderId: { type: 'string', format: 'uuid' } },
+      },
+    },
+  }, async (req, reply) => {
+    const prisma = (await import('@/lib/prisma')).default;
+    const { notificationsService } = await import('@/modules/notifications/notifications.service');
+    const { tplReceipt } = await import('@/modules/notifications/email-templates');
+    const { qrService } = await import('@/lib/qr');
+    const { generateTicketPdf } = await import('@/lib/ticket-pdf');
+
+    const order = await prisma.order.findUnique({
+      where: { id: req.params.orderId },
+      include: {
+        tickets: {
+          include: {
+            eventee: { select: { email: true, fullName: true } },
+            event:   { select: { id: true, title: true, venue: true, startsAt: true, price: true, currency: true, confirmationMessage: true } },
+          },
+        },
+        tier: { select: { name: true } },
+      },
+    });
+
+    if (!order) return reply.status(404).send({ message: 'Order not found' });
+    if (order.status !== 'PAID') return reply.status(400).send({ message: 'Order is not PAID' });
+
+    const results: { ticketId: string; email: string; ok: boolean; error?: string }[] = [];
+
+    for (const ticket of order.tickets) {
+      const recipientEmail = ticket.eventee?.email ?? order.buyerEmail;
+      const recipientName  = ticket.eventee?.fullName ?? order.buyerName ?? 'Guest';
+
+      if (!recipientEmail) {
+        results.push({ ticketId: ticket.id, email: '(none)', ok: false, error: 'No email address' });
+        continue;
+      }
+
+      try {
+        const qrPayload   = qrService.sign(ticket.id, ticket.event.id);
+        const qrPngBuffer = await qrService.generatePng(qrPayload);
+        const qrBase64    = qrPngBuffer.toString('base64');
+
+        const pdfBuffer = await generateTicketPdf({
+          fullName:   recipientName,
+          eventTitle: ticket.event.title,
+          venue:      ticket.event.venue,
+          startsAt:   ticket.event.startsAt,
+          price:      ticket.event.price.toString(),
+          currency:   ticket.event.currency,
+          ticketId:   ticket.id,
+          qrPngBuffer,
+          confirmationMessage: ticket.event.confirmationMessage ?? undefined,
+        });
+
+        await notificationsService.sendEmail(
+          recipientEmail,
+          `Your ticket for "${ticket.event.title}" is confirmed`,
+          tplReceipt({
+            fullName:   recipientName,
+            eventTitle: ticket.event.title,
+            venue:      ticket.event.venue,
+            startsAt:   ticket.event.startsAt,
+            price:      ticket.event.price.toString(),
+            currency:   ticket.event.currency,
+            ticketId:   ticket.id,
+            qrBase64,
+            confirmationMessage: ticket.event.confirmationMessage ?? undefined,
+          }),
+          [{ content: pdfBuffer.toString('base64'), name: `ticket-${ticket.id.split('-')[0]}.pdf` }],
+        );
+
+        results.push({ ticketId: ticket.id, email: recipientEmail, ok: true });
+      } catch (err) {
+        results.push({ ticketId: ticket.id, email: recipientEmail, ok: false, error: (err as Error).message });
+      }
+    }
+
+    return reply.send({ results });
+  });
+
   // POST /orders/:orderId/verify — manually verify payment with Tranzak (no auth — UUID is the secret)
   app.post<{ Params: { orderId: string } }>('/orders/:orderId/verify', {
     schema: {
