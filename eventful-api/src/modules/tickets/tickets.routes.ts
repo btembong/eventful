@@ -134,6 +134,32 @@ export default async function ticketsRoutes(app: FastifyInstance) {
     return reply.send(png);
   });
 
+  // GET /tickets/:ticketId/qr.png — public QR image (no auth — ticketId is access token, payload is HMAC-signed)
+  app.get<{ Params: { ticketId: string } }>('/tickets/:ticketId/qr.png', {
+    schema: {
+      tags: ['Tickets'],
+      summary: 'Public QR code PNG for embedding in receipt emails',
+      params: {
+        type: 'object',
+        required: ['ticketId'],
+        properties: { ticketId: { type: 'string', format: 'uuid' } },
+      },
+    },
+  }, async (req, reply) => {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: req.params.ticketId },
+      include: { event: { select: { id: true } } },
+    });
+    if (!ticket || ticket.status === 'CANCELLED') return reply.status(404).send();
+
+    const payload = qrService.sign(ticket.id, ticket.event.id);
+    const png     = await qrService.generatePng(payload);
+
+    reply.header('Content-Type', 'image/png');
+    reply.header('Cache-Control', 'public, max-age=3600');
+    return reply.send(png);
+  });
+
   // POST /events/:id/checkin — scan QR code at the door (CREATOR / SCANNER role)
   app.post<{ Params: { id: string }; Body: { qrPayload: string } }>('/events/:id/checkin', {
     schema: {

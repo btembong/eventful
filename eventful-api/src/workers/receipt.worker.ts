@@ -39,10 +39,10 @@ export const receiptWorker = new Worker<ReceiptJobData>(
       return;
     }
 
-    // Generate signed QR payload and PNG
-    const qrPayload  = qrService.sign(ticket.id, ticket.event.id);
+    // Generate signed QR payload and PNG (for PDF only — email uses a URL so Gmail renders it)
+    const qrPayload   = qrService.sign(ticket.id, ticket.event.id);
     const qrPngBuffer = await qrService.generatePng(qrPayload);
-    const qrBase64   = qrPngBuffer.toString('base64');
+    const qrImageUrl  = `${(await import('@/config/env')).default.API_BASE_URL}/v1/tickets/${ticket.id}/qr.png`;
 
     // Generate PDF ticket
     const pdfParams = {
@@ -69,7 +69,7 @@ export const receiptWorker = new Worker<ReceiptJobData>(
         price:               ticket.event.price.toString(),
         currency:            ticket.event.currency,
         ticketId:            ticket.id,
-        qrBase64,
+        qrImageUrl,
         confirmationMessage: ticket.event.confirmationMessage ?? undefined,
       }),
       [{ content: pdfBuffer.toString('base64'), name: `ticket-${ticket.id.split('-')[0]}.pdf` }],

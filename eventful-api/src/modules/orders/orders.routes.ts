@@ -160,7 +160,8 @@ export default async function ordersRoutes(app: FastifyInstance) {
       try {
         const qrPayload   = qrService.sign(ticket.id, ticket.event.id);
         const qrPngBuffer = await qrService.generatePng(qrPayload);
-        const qrBase64    = qrPngBuffer.toString('base64');
+        const apiBaseUrl  = (await import('@/config/env')).default.API_BASE_URL;
+        const qrImageUrl  = `${apiBaseUrl}/v1/tickets/${ticket.id}/qr.png`;
 
         const pdfBuffer = await generateTicketPdf({
           fullName:   recipientName,
@@ -185,7 +186,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
             price:      ticket.event.price.toString(),
             currency:   ticket.event.currency,
             ticketId:   ticket.id,
-            qrBase64,
+            qrImageUrl,
             confirmationMessage: ticket.event.confirmationMessage ?? undefined,
           }),
           [{ content: pdfBuffer.toString('base64'), name: `ticket-${ticket.id.split('-')[0]}.pdf` }],

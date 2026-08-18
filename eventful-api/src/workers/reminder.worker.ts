@@ -41,9 +41,7 @@ export const reminderWorker = new Worker<ReminderJobData>(
     }
 
     if (channel === 'EMAIL') {
-      const qrPayload   = qrService.sign(ticket.id, ticket.eventId);
-      const qrPngBuffer = await qrService.generatePng(qrPayload);
-      const qrBase64    = qrPngBuffer.toString('base64');
+      const qrImageUrl = `${(await import('@/config/env')).default.API_BASE_URL}/v1/tickets/${ticket.id}/qr.png`;
 
       await notificationsService.sendEmail(
         ticket.eventee.email,
@@ -54,7 +52,7 @@ export const reminderWorker = new Worker<ReminderJobData>(
           venue:         ticket.event.venue,
           startsAt:      ticket.event.startsAt,
           offsetMinutes: pref.offsetMinutes,
-          qrBase64,
+          qrImageUrl,
           ticketId:      ticket.id,
         }),
       );

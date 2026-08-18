@@ -166,12 +166,12 @@ export function notice(text: string, type: 'info' | 'warning' | 'error'): string
 }
 
 /** Centered QR code block */
-export function qrBlock(qrBase64: string, bookingId: string): string {
+export function qrBlock(qrImageUrl: string, bookingId: string): string {
   return `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
     <tr>
       <td align="center">
         <div style="display:inline-block;border:2px solid ${BORDER};border-radius:12px;padding:16px;background:#FAFAFA;">
-          <img src="data:image/png;base64,${qrBase64}" width="190" height="190" alt="Entry QR code" style="display:block;border-radius:4px;">
+          <img src="${qrImageUrl}" width="190" height="190" alt="Entry QR code" style="display:block;border-radius:4px;">
           <p style="margin:10px 0 0;font-size:10px;color:#AAAAAA;text-align:center;font-family:monospace;letter-spacing:0.08em;">${bookingId}</p>
         </div>
         <p style="margin:10px 0 0;font-size:12px;color:${MUTED};">Present this QR code at the door</p>
@@ -204,7 +204,7 @@ export function tplReceipt(opts: {
   price: string;
   currency: string;
   ticketId: string;
-  qrBase64: string;
+  qrImageUrl: string;
   confirmationMessage?: string;
 }): string {
   const when   = opts.startsAt.toLocaleString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -217,7 +217,7 @@ export function tplReceipt(opts: {
     label('Booking confirmed') +
     h1('You\'re going!') +
     p('Your ticket has been confirmed. Your entry QR code is below — a PDF copy is attached to this email.') +
-    qrBlock(opts.qrBase64, shortId) +
+    qrBlock(opts.qrImageUrl, shortId) +
     infoTable([
       row('Event',        opts.eventTitle),
       row('Date &amp; time', when),
@@ -241,7 +241,7 @@ export function tplReminder(opts: {
   startsAt: Date;
   offsetMinutes: number;
   ticketId: string;
-  qrBase64: string;
+  qrImageUrl: string;
 }): string {
   const humanOffset =
     opts.offsetMinutes >= 1440
@@ -268,7 +268,7 @@ export function tplReminder(opts: {
     label('Event reminder') +
     h1('Don\'t forget — you\'re going!') +
     p('Your event is coming up soon. Your QR entry code is below — have it ready at the door.') +
-    qrBlock(opts.qrBase64, shortId) +
+    qrBlock(opts.qrImageUrl, shortId) +
     infoTable([
       row('Date &amp; time', `<strong>${when}</strong>`),
       row('Venue', opts.venue, true),

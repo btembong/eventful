@@ -30,6 +30,7 @@ const envSchema = z.object({
   AFRICAS_TALKING_USERNAME: z.string().optional(),
 
   APP_BASE_URL: z.string().url().default('http://localhost:3000'),
+  API_BASE_URL: z.string().url().default('http://localhost:3001'),
 
   // Platform fee charged on every paid ticket (percentage, e.g. 5 = 5%)
   PLATFORM_FEE_PCT: z.coerce.number().min(0).max(100).default(5),
