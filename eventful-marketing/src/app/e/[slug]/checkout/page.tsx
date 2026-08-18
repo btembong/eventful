@@ -487,15 +487,20 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
   const [phone,        setPhone]        = useState('');
   const [countryCode,  setCountryCode]  = useState('+237');
 
-  // Step 3
-  const [orderId,         setOrderId]         = useState<string | null>(null);
-  const [paymentUrl,      setPaymentUrl]       = useState<string | null>(null);
-  const [paymentRequired, setPaymentRequired]  = useState(false);
-  const [orderSuccess,    setOrderSuccess]     = useState(false);
-  const [creating,        setCreating]         = useState(false);
-  const [error,           setError]            = useState('');
-  const [showRelease,     setShowRelease]      = useState(false);
-  const [promo,           setPromo]            = useState<PromoResult | null>(null);
+  // Invite codes keyed by tierId (for INVITE_ONLY tiers)
+  const [inviteCodes, setInviteCodes] = useState<Record<string, string>>({});
+
+  // Step 3 — supports sequential multi-tier payments
+  const [paymentQueue,    setPaymentQueue]     = useState<Array<{ orderId: string; paymentUrl: string }>>([]);
+  const [orderId,         setOrderId]          = useState<string | null>(null);
+  const [paymentUrl,      setPaymentUrl]        = useState<string | null>(null);
+  const [paymentRequired, setPaymentRequired]   = useState(false);
+  const [orderSuccess,    setOrderSuccess]      = useState(false);
+  const [paidCount,       setPaidCount]         = useState(0); // how many payments done
+  const [creating,        setCreating]          = useState(false);
+  const [error,           setError]             = useState('');
+  const [showRelease,     setShowRelease]       = useState(false);
+  const [promo,           setPromo]             = useState<PromoResult | null>(null);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -521,7 +526,10 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
   const tiers         = event?.tiers ?? [];
   const selectedTiers = tiers.filter(t => (qty[t.id] ?? 0) > 0);
   const { lines, currency, subtotal, total, totalQty } = calcOrder(tiers, qty, promo);
-  const canTickets = totalQty > 0;
+  const inviteCodesMissing = selectedTiers.some(
+    t => t.type === 'INVITE_ONLY' && !(inviteCodes[t.id]?.trim())
+  );
+  const canTickets = totalQty > 0 && !inviteCodesMissing;
   const canContact = !!(firstName.trim() && lastName.trim() &&
                      email.trim() && emailConfirm.trim() && email === emailConfirm);
 
@@ -541,8 +549,8 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
     if (creating || !canContact || !event) return;
     setCreating(true); setError('');
     try {
-      let firstPaymentUrl: string | null = null;
-      let firstOrderId:    string | null = null;
+      const queue: Array<{ orderId: string; paymentUrl: string }> = [];
+      let firstFreeOrderId: string | null = null;
       let anyPaid = false;
 
       for (const tier of selectedTiers) {
@@ -556,6 +564,7 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
             buyerEmail: email.trim(),
             buyerPhone: phone.trim() ? `${countryCode}${phone.trim()}` : undefined,
             promoCode:  promo?.code,
+            inviteCode: inviteCodes[tier.id] ?? undefined,
             ...(tier.id === initTierId && initSeats.length > 0 ? { seats: initSeats, sessionId: initSession } : {}),
           }),
         });
@@ -564,14 +573,24 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
           throw new Error((d as { message?: string }).message ?? 'Failed to create order');
         }
         const d = await res.json() as { order?: { id?: string }; paymentRequired?: boolean; paymentUrl?: string };
-        if (!firstOrderId) firstOrderId = d.order?.id ?? null;
-        if (d.paymentRequired && !firstPaymentUrl) { anyPaid = true; firstPaymentUrl = d.paymentUrl ?? null; }
+        if (d.paymentRequired && d.paymentUrl && d.order?.id) {
+          anyPaid = true;
+          queue.push({ orderId: d.order.id, paymentUrl: d.paymentUrl });
+        } else if (!anyPaid && d.order?.id) {
+          firstFreeOrderId = d.order.id;
+        }
       }
 
-      setOrderId(firstOrderId);
-      setPaymentUrl(firstPaymentUrl);
-      setPaymentRequired(anyPaid);
-      if (!anyPaid) setOrderSuccess(true);
+      if (anyPaid) {
+        setPaymentQueue(queue);
+        setOrderId(queue[0].orderId);
+        setPaymentUrl(queue[0].paymentUrl);
+        setPaymentRequired(true);
+      } else {
+        setOrderId(firstFreeOrderId);
+        setPaymentRequired(false);
+        setOrderSuccess(true);
+      }
       goTo('payment');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Something went wrong. Please try again.';
@@ -581,13 +600,12 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
       setCreating(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [creating, canContact, event, selectedTiers, qty, firstName, lastName, email, phone, countryCode, promo, apiFetch]);
+  }, [creating, canContact, event, selectedTiers, qty, firstName, lastName, email, phone, countryCode, promo, inviteCodes, apiFetch]);
 
   const handleCheckPayment = useCallback(async (retries = 0) => {
     if (!orderId) return;
     setError('');
     try {
-      // On first call, ask the API to verify directly with Tranzak (fixes missed webhooks)
       if (retries === 0) {
         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/verify`, { method: 'POST' });
       }
@@ -595,8 +613,18 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
       if (res.ok) {
         const d = await res.json() as { status?: string };
         if (d.status === 'PAID') {
-          setOrderSuccess(true);
-          toast.success('Payment confirmed! Your tickets are on the way.');
+          const newQueue = paymentQueue.slice(1);
+          setPaidCount(c => c + 1);
+          if (newQueue.length > 0) {
+            // More payments to complete — advance to next
+            setPaymentQueue(newQueue);
+            setOrderId(newQueue[0].orderId);
+            setPaymentUrl(newQueue[0].paymentUrl);
+            toast.success('Payment confirmed! Complete the next one.');
+          } else {
+            setOrderSuccess(true);
+            toast.success('Payment confirmed! Your tickets are on the way.');
+          }
         } else if (retries < 3) {
           setTimeout(() => handleCheckPayment(retries + 1), 2000);
         } else {
@@ -604,7 +632,7 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
         }
       }
     } catch { /* ignore */ }
-  }, [orderId, apiFetch]);
+  }, [orderId, paymentQueue, apiFetch]);
 
   // Listen for payment-complete postMessage from /payment/return iframe page
   useEffect(() => {
@@ -773,6 +801,19 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
                                   </svg>
                                   Only {remaining} left!
                                 </p>
+                              )}
+
+                              {/* Invite code input — shown inline when tier is selected */}
+                              {tier.type === 'INVITE_ONLY' && count > 0 && (
+                                <div className="mt-3">
+                                  <input
+                                    type="text"
+                                    value={inviteCodes[tier.id] ?? ''}
+                                    onChange={e => setInviteCodes(p => ({ ...p, [tier.id]: e.target.value }))}
+                                    placeholder="Enter invite code"
+                                    className="w-full rounded-lg border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-xs font-semibold text-fuchsia-900 outline-none placeholder:font-normal placeholder:text-fuchsia-400 focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-400/20"
+                                  />
+                                </div>
                               )}
                             </div>
 
@@ -974,7 +1015,9 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
             {/* ── Step 3: Payment ───────────────────────────────────────────── */}
             {step === 'payment' && (
               <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100 sm:p-8">
-                <h2 className="mb-1 text-xl font-extrabold text-slate-900">Payment</h2>
+                <h2 className="mb-1 text-xl font-extrabold text-slate-900">
+                  Payment{paymentQueue.length > 1 ? ` (${paidCount + 1} of ${paidCount + paymentQueue.length})` : ''}
+                </h2>
                 <p className="mb-6 text-sm text-slate-400">Complete your payment securely to confirm your tickets.</p>
 
                 {/* Free — instant success */}
