@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -95,7 +95,7 @@ function PasswordStrength({ password }: { password: string }) {
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
-export default function SignupPage() {
+function SignupInner() {
   const searchParams = useSearchParams();
   const [fullName,      setFullName]      = useState('');
   const [email,         setEmail]         = useState('');
@@ -375,5 +375,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupInner />
+    </Suspense>
   );
 }
