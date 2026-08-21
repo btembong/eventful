@@ -227,11 +227,11 @@ function SuccessScreen({ email }: { email: string }) {
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-100">
         <CheckIcon className="h-10 w-10 text-brand-600" />
       </div>
-      <h2 className="mt-6 text-2xl font-extrabold text-slate-900">Almost there!</h2>
+      <h2 className="mt-6 text-2xl font-extrabold text-slate-900">You&apos;re approved!</h2>
       <p className="mt-2 max-w-sm text-sm text-slate-500">
-        Your application has been submitted. We sent a verification link to{' '}
+        Your creator account is ready. We sent a verification link to{' '}
         <span className="font-semibold text-slate-700">{email}</span>.
-        Activate your account first, then we&apos;ll review your application.
+        Click it to activate your account and start creating events.
       </p>
       <div className="mt-8 space-y-3 rounded-2xl bg-slate-50 p-6 text-left text-sm text-slate-600 w-full max-w-sm">
         <p className="font-bold text-slate-900">What happens next?</p>
@@ -241,11 +241,11 @@ function SuccessScreen({ email }: { email: string }) {
         </div>
         <div className="flex items-start gap-3">
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-extrabold text-brand-600">2</span>
-          <p>Our team reviews your identity and organization details within <strong>2 business days</strong>.</p>
+          <p>Sign in and go to your <strong>Creator Dashboard</strong> to create your first event.</p>
         </div>
         <div className="flex items-start gap-3">
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-extrabold text-brand-600">3</span>
-          <p>You receive an approval email and your creator dashboard is unlocked.</p>
+          <p>When you&apos;re ready to withdraw earnings, complete a quick identity check in Settings.</p>
         </div>
       </div>
       <Link href="/login" className="mt-8 rounded-xl bg-brand-600 px-8 py-3 text-sm font-bold text-white transition hover:bg-brand-500">

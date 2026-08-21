@@ -56,7 +56,7 @@ export default async function creatorApplicationRoutes(app: FastifyInstance) {
       return reply.status(400).send({ message: 'Your creator account is already approved.' });
     }
     if (user.creatorStatus === 'PENDING') {
-      return reply.status(400).send({ message: 'You already have a pending application. We will review it shortly.' });
+      // Auto-approve the pending application immediately
     }
 
     const { orgName, orgType, orgPhone, orgWebsite, orgDescription } = req.body;
@@ -65,27 +65,30 @@ export default async function creatorApplicationRoutes(app: FastifyInstance) {
       prisma.user.update({
         where: { id: req.user!.id },
         data: {
-          creatorStatus: 'PENDING',
+          creatorStatus:    'APPROVED',
+          roles:            { push: 'CREATOR' },
           orgName,
           orgType,
           orgPhone,
           orgWebsite,
           orgDescription,
-          creatorAppliedAt: new Date(),
+          creatorAppliedAt:  new Date(),
+          creatorReviewedAt: new Date(),
           creatorRejectedReason: null,
         },
       }),
       prisma.auditLog.create({
         data: {
           actorId:    req.user!.id,
-          action:     'creator.applied',
+          action:     'creator.approved',
           entityType: 'User',
           entityId:   req.user!.id,
+          meta:       { autoApproved: true },
         },
       }),
     ]);
 
-    return reply.send({ creatorStatus: 'PENDING', message: 'Application submitted. You will hear from us within 2 business days.' });
+    return reply.send({ creatorStatus: 'APPROVED', message: 'Your creator account is approved. Verify your email to start creating events.' });
   });
 
   // GET /creators/application — get own application status
