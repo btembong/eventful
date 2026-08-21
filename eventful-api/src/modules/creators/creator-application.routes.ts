@@ -176,23 +176,28 @@ export default async function creatorApplicationRoutes(app: FastifyInstance) {
     return { creatorStatus: user.creatorStatus };
   });
 
-  // GET /creators/admin/pending — list pending applications (admin only)
-  app.get('/admin/pending', {
+  // GET /creators/admin/applications — list applications by status (admin only)
+  app.get<{ Querystring: { status?: string } }>('/admin/applications', {
     schema: {
       tags: ['Creators'],
-      summary: 'Admin: list pending creator applications',
+      summary: 'Admin: list creator applications by status (PENDING | APPROVED | REJECTED)',
       security: [{ bearerAuth: [] }],
+      querystring: {
+        type: 'object',
+        properties: { status: { type: 'string', enum: ['PENDING', 'APPROVED', 'REJECTED'], default: 'PENDING' } },
+      },
     },
     preHandler: requireRole('ADMIN'),
-  }, async () => {
+  }, async (req) => {
+    const status = req.query.status ?? 'PENDING';
     return prisma.user.findMany({
-      where: { creatorStatus: 'PENDING', deletedAt: null },
+      where: { creatorStatus: status as 'PENDING' | 'APPROVED' | 'REJECTED', deletedAt: null },
       select: {
         id: true, fullName: true, email: true, phone: true,
         orgName: true, orgType: true, orgPhone: true, orgWebsite: true, orgDescription: true,
         kycDocType: true, kycDocUrl: true,
         payoutType: true, payoutNumber: true, payoutBankName: true,
-        creatorAppliedAt: true,
+        creatorAppliedAt: true, creatorReviewedAt: true, creatorRejectedReason: true,
       },
       orderBy: { creatorAppliedAt: 'asc' },
     });

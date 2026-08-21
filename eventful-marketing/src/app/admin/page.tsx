@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 const API = process.env.NEXT_PUBLIC_API_URL!;
@@ -11,16 +14,6 @@ interface Stats {
   pendingCreatorApplications: number;
 }
 
-async function fetchStats(): Promise<Stats | null> {
-  try {
-    const res = await fetch(`${API}/admin/stats`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
-
 function KPI({ label, value, sub, href }: { label: string; value: string; sub?: string; href?: string }) {
   const inner = (
     <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100 transition hover:ring-brand-200">
@@ -32,16 +25,26 @@ function KPI({ label, value, sub, href }: { label: string; value: string; sub?: 
   return href ? <Link href={href}>{inner}</Link> : inner;
 }
 
-export default async function AdminOverview() {
-  const stats = await fetchStats();
+export default function AdminOverview() {
+  const [stats,   setStats]   = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('access_token') ?? '';
+    fetch(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.ok ? r.json() : null)
+      .then(setStats)
+      .catch(() => setStats(null))
+      .finally(() => setLoading(false));
+  }, []);
 
   const kpis = stats ? [
-    { label: 'Total users',              value: stats.totalUsers.toLocaleString(),          href: '/admin/users' },
-    { label: 'Creators',                 value: stats.totalCreators.toLocaleString(),       href: '/admin/users?role=CREATOR' },
-    { label: 'Events',                   value: stats.totalEvents.toLocaleString(),         href: '/admin/events' },
-    { label: 'Tickets sold',             value: stats.totalTicketsSold.toLocaleString() },
-    { label: 'Platform revenue (XAF)',   value: `XAF ${stats.totalRevenue.toLocaleString()}` },
-    { label: 'Pending applications',     value: stats.pendingCreatorApplications.toLocaleString(), sub: 'awaiting review', href: '/admin/creators' },
+    { label: 'Total users',            value: stats.totalUsers.toLocaleString(),          href: '/admin/users' },
+    { label: 'Creators',               value: stats.totalCreators.toLocaleString(),       href: '/admin/creators?status=APPROVED' },
+    { label: 'Events',                 value: stats.totalEvents.toLocaleString(),         href: '/admin/events' },
+    { label: 'Tickets sold',           value: stats.totalTicketsSold.toLocaleString() },
+    { label: 'Platform revenue (XAF)', value: `XAF ${stats.totalRevenue.toLocaleString()}` },
+    { label: 'Pending applications',   value: stats.pendingCreatorApplications.toLocaleString(), sub: 'awaiting review', href: '/admin/creators' },
   ] : [];
 
   return (
@@ -49,22 +52,27 @@ export default async function AdminOverview() {
       <h1 className="mb-2 text-2xl font-extrabold text-slate-900">Platform overview</h1>
       <p className="mb-8 text-sm text-slate-500">Live stats — refreshed on each page load.</p>
 
-      {!stats && (
+      {!loading && !stats && (
         <div className="mb-6 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          Could not load stats — API may be offline or authentication is required.
+          Could not load stats — API may be offline.
         </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {kpis.map((k) => <KPI key={k.label} {...k} />)}
+        {loading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-100" />
+            ))
+          : kpis.map((k) => <KPI key={k.label} {...k} />)
+        }
       </div>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-3">
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { title: 'Creator applications', desc: 'Review and approve creator KYC submissions.', href: '/admin/creators' },
-          { title: 'User management',      desc: 'Search, view, and ban platform users.',          href: '/admin/users' },
-          { title: 'Event moderation',     desc: 'Review and force-cancel events if needed.',      href: '/admin/events' },
-          { title: 'Audit log',            desc: 'Full platform action trail.',                    href: '/admin/audit-log' },
+          { title: 'User management',      desc: 'Search, view, and ban platform users.',       href: '/admin/users' },
+          { title: 'Event moderation',     desc: 'Review and force-cancel events if needed.',   href: '/admin/events' },
+          { title: 'Audit log',            desc: 'Full platform action trail.',                  href: '/admin/audit-log' },
         ].map((card) => (
           <Link key={card.href} href={card.href} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 transition hover:ring-brand-300 hover:shadow-md">
             <p className="text-sm font-bold text-slate-900">{card.title}</p>
