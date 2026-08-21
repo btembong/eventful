@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   TicketIcon, CheckIcon, UserIcon, CalendarIcon, LockIcon,
+  BuildingsIcon, UsersGroupIcon,
 } from '@/components/icons';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -101,10 +102,10 @@ function Step1Account({ d, set, errs }: { d: FormData; set: (k: keyof FormData, 
 }
 
 function Step2Profile({ d, set, errs }: { d: FormData; set: (k: keyof FormData, v: string | boolean) => void; errs: Partial<Record<keyof FormData, string>> }) {
-  const ORG_TYPES: { value: OrgType; label: string; emoji: string; desc: string }[] = [
-    { value: 'INDIVIDUAL', label: 'Individual',   emoji: '👤', desc: 'Solo organiser or freelancer' },
-    { value: 'COMPANY',    label: 'Company',       emoji: '🏢', desc: 'Registered business or agency' },
-    { value: 'NGO',        label: 'NGO / Non-profit', emoji: '🤝', desc: 'Foundation or cultural org' },
+  const ORG_TYPES: { value: OrgType; label: string; Icon: React.ComponentType<{ className?: string }>; desc: string }[] = [
+    { value: 'INDIVIDUAL', label: 'Individual',      Icon: UserIcon,       desc: 'Solo organiser or freelancer' },
+    { value: 'COMPANY',    label: 'Company',          Icon: BuildingsIcon,  desc: 'Registered business or agency' },
+    { value: 'NGO',        label: 'NGO / Non-profit', Icon: UsersGroupIcon, desc: 'Foundation or cultural org' },
   ];
   return (
     <div className="space-y-5">
@@ -125,7 +126,7 @@ function Step2Profile({ d, set, errs }: { d: FormData; set: (k: keyof FormData, 
                   : 'border-slate-200 hover:border-brand-200'
               }`}
             >
-              <span className="text-2xl">{t.emoji}</span>
+              <t.Icon className={`h-6 w-6 ${d.orgType === t.value ? 'text-brand-600' : 'text-slate-500'}`} />
               <span className={`text-xs font-bold ${d.orgType === t.value ? 'text-brand-600' : 'text-slate-700'}`}>{t.label}</span>
               <span className="text-[10px] text-slate-400">{t.desc}</span>
             </button>
