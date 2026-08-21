@@ -44,10 +44,11 @@ function greeting() {
 }
 
 
-function fmtMoney(n: number, currency = 'XAF') {
-  if (n >= 1_000_000) return `${currency} ${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)     return `${currency} ${(n / 1_000).toFixed(0)}K`;
-  return `${currency} ${n.toLocaleString()}`;
+function fmtMoney(n: number | null | undefined, currency = 'XAF') {
+  const v = n ?? 0;
+  if (v >= 1_000_000) return `${currency} ${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000)     return `${currency} ${(v / 1_000).toFixed(0)}K`;
+  return `${currency} ${v.toLocaleString()}`;
 }
 
 function deriveStatus(ev: EventRow) {
@@ -101,7 +102,7 @@ export default function CreatorOverview() {
     },
     {
       label: 'Tickets sold',
-      value: analytics ? analytics.totalTicketsSold.toLocaleString() : null,
+      value: analytics ? (analytics.totalTicketsSold ?? 0).toLocaleString() : null,
       sub: 'all time',
       Icon: TicketIcon,
     },
@@ -113,7 +114,7 @@ export default function CreatorOverview() {
     },
     {
       label: 'Checked in',
-      value: analytics ? analytics.checkedIn.toLocaleString() : null,
+      value: analytics ? (analytics.checkedIn ?? 0).toLocaleString() : null,
       sub: 'total attendees',
       Icon: UsersGroupIcon,
     },
