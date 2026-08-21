@@ -114,7 +114,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
 
   if (loading) return (
     <div className="flex min-h-screen items-center justify-center">
-      <ThinkingOrb state="breathing" size={48} theme="light" />
+      <ThinkingOrb state="breathing" size={64} theme="light" />
     </div>
   );
 

@@ -525,7 +525,7 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
 
   const tiers         = event?.tiers ?? [];
   const selectedTiers = tiers.filter(t => (qty[t.id] ?? 0) > 0);
-  const { lines, currency, subtotal, total, totalQty } = calcOrder(tiers, qty, promo);
+  const { currency, subtotal, total, totalQty } = calcOrder(tiers, qty, promo);
   const inviteCodesMissing = selectedTiers.some(
     t => t.type === 'INVITE_ONLY' && !(inviteCodes[t.id]?.trim())
   );
@@ -1074,7 +1074,7 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
                         {error && (
                           <p className="max-w-[200px] text-right text-xs text-red-500">{error}</p>
                         )}
-                        <button onClick={handleCheckPayment}
+                        <button onClick={() => handleCheckPayment()}
                           className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-5 py-2.5 text-sm font-bold text-brand-700 transition hover:bg-brand-100">
                           <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
                             <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
