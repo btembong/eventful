@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, TagPriceIcon, XIcon } from '@/components/icons';
+import { PlusIcon, XIcon } from '@/components/icons';
 import { toast } from '@/components/Toast';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -88,7 +88,7 @@ function CodeModal({
           value:          numVal,
           maxUses:        maxUses ? Number(maxUses) : null,
           minOrderAmount: minOrder ? Number(minOrder) : null,
-          expiresAt:      expiresAt || null,
+          expiresAt:      expiresAt ? new Date(expiresAt).toISOString() : null,
           eventIds:       allEvents ? [] : eventIds,
         }),
       });

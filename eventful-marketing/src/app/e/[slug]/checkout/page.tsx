@@ -605,33 +605,50 @@ function CheckoutInner({ params }: { params: Promise<{ slug: string }> }) {
   const handleCheckPayment = useCallback(async (retries = 0) => {
     if (!orderId) return;
     setError('');
-    try {
-      if (retries === 0) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/verify`, { method: 'POST' });
+
+    function confirmPaid() {
+      const newQueue = paymentQueue.slice(1);
+      setPaidCount(c => c + 1);
+      if (newQueue.length > 0) {
+        setPaymentQueue(newQueue);
+        setOrderId(newQueue[0].orderId);
+        setPaymentUrl(newQueue[0].paymentUrl);
+        toast.success('Payment confirmed! Complete the next one.');
+      } else {
+        setOrderSuccess(true);
+        toast.success('Payment confirmed! Your tickets are on the way.');
       }
+    }
+
+    function scheduleRetry() {
+      if (retries < 5) {
+        setTimeout(() => handleCheckPayment(retries + 1), 2500);
+      } else {
+        setError('Payment not confirmed yet. Please try again or click the button below.');
+      }
+    }
+
+    try {
+      // First attempt: call verify which talks to Tranzak directly; use its response
+      if (retries === 0) {
+        const vRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}/verify`, { method: 'POST' });
+        if (vRes.ok) {
+          const vData = await vRes.json() as { status?: string };
+          if (vData.status === 'PAID') { confirmPaid(); return; }
+        }
+      }
+
+      // Poll order status (also covers webhook-confirmed payments)
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`);
       if (res.ok) {
         const d = await res.json() as { status?: string };
-        if (d.status === 'PAID') {
-          const newQueue = paymentQueue.slice(1);
-          setPaidCount(c => c + 1);
-          if (newQueue.length > 0) {
-            // More payments to complete — advance to next
-            setPaymentQueue(newQueue);
-            setOrderId(newQueue[0].orderId);
-            setPaymentUrl(newQueue[0].paymentUrl);
-            toast.success('Payment confirmed! Complete the next one.');
-          } else {
-            setOrderSuccess(true);
-            toast.success('Payment confirmed! Your tickets are on the way.');
-          }
-        } else if (retries < 3) {
-          setTimeout(() => handleCheckPayment(retries + 1), 2000);
-        } else {
-          setError('Payment not confirmed yet. Please try again or click the button below.');
-        }
+        if (d.status === 'PAID') { confirmPaid(); } else { scheduleRetry(); }
+      } else {
+        scheduleRetry();
       }
-    } catch { /* ignore */ }
+    } catch {
+      scheduleRetry();
+    }
   }, [orderId, paymentQueue, apiFetch]);
 
   // Listen for payment-complete postMessage from /payment/return iframe page
