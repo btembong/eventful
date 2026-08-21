@@ -9,7 +9,7 @@ import {
 
 interface Event {
   id: string; title: string; category: string; venue: string;
-  startsAt: string; price: string; currency: string;
+  startsAt: string; minPrice: number; isFree: boolean; currency: string;
   shareSlug: string; capacity: number; coverImageUrl?: string;
   _count?: { tickets: number };
 }
@@ -103,7 +103,7 @@ function EventCard({ event }: { event: Event }) {
   const catMeta = CATEGORIES.find((c) => c.value === event.category);
   const tickets = event._count?.tickets ?? 0;
   const avail   = availInfo(event.capacity, tickets);
-  const isFree  = Number(event.price) === 0;
+  const isFree  = event.isFree;
   const d       = new Date(event.startsAt);
   const dayNum  = d.getDate();
   const month   = d.toLocaleDateString('en-GB', { month: 'short' });
@@ -144,7 +144,7 @@ function EventCard({ event }: { event: Event }) {
         <div className={`absolute bottom-2 right-2 rounded-full px-2 py-0.5 text-[9px] font-extrabold sm:bottom-3 sm:right-3 sm:px-2.5 sm:text-[10px] ${
           isFree ? 'bg-brand-600 text-white' : 'bg-white/10 text-white backdrop-blur-sm'
         }`}>
-          {isFree ? 'Free' : `${event.currency} ${Number(event.price).toLocaleString()}`}
+          {isFree ? 'Free' : `from ${event.currency} ${event.minPrice.toLocaleString()}`}
         </div>
       </div>
 

@@ -177,7 +177,7 @@ export const eventsService = {
       } : {}),
     };
 
-    const [events, total] = await Promise.all([
+    const [rawEvents, total] = await Promise.all([
       prisma.event.findMany({
         where,
         orderBy: { startsAt: 'asc' },
@@ -185,13 +185,27 @@ export const eventsService = {
         take: limit,
         select: {
           id: true, title: true, category: true, venue: true,
-          startsAt: true, endsAt: true, price: true, currency: true,
+          startsAt: true, endsAt: true, currency: true,
           shareSlug: true, capacity: true,
           _count: { select: { tickets: true } },
+          tiers: {
+            where: { isOnSale: true },
+            select: { price: true, type: true },
+          },
         },
       }),
       prisma.event.count({ where }),
     ]);
+
+    // Compute accurate min price from live tiers instead of stale event.price
+    const events = rawEvents.map(({ tiers, ...ev }) => {
+      const paidTiers = tiers.filter((t) => t.type !== 'FREE' && t.type !== 'INVITE_ONLY');
+      const hasFree   = tiers.some((t) => t.type === 'FREE');
+      const minPrice  = paidTiers.length > 0
+        ? Math.min(...paidTiers.map((t) => Number(t.price)))
+        : 0;
+      return { ...ev, minPrice, isFree: paidTiers.length === 0 || hasFree };
+    });
 
     const result = { events, total, page, limit, pages: Math.ceil(total / limit) };
     await redis.set(cacheKey, JSON.stringify(result), 'EX', DISCOVERY_TTL);
