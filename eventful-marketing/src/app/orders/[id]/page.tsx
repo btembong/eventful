@@ -5,6 +5,64 @@ import Link from 'next/link';
 import { TicketIcon, CalendarIcon, MapPointIcon } from '@/components/icons';
 import { ThinkingOrb } from 'thinking-orbs';
 
+function GuestAccountAd({ email, name }: { email?: string; name?: string }) {
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('guest_ad_dismissed')) {
+      setDismissed(true);
+    }
+  }, []);
+
+  if (dismissed) return null;
+
+  const params = new URLSearchParams();
+  if (email) params.set('email', email);
+  if (name)  params.set('name', name);
+
+  return (
+    <div className="mt-6 rounded-2xl border border-brand-200 bg-brand-50 px-6 py-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-extrabold text-brand-900">Save your tickets — create a free account</p>
+          <p className="mt-1 text-xs text-brand-700">Never lose your tickets in your inbox again.</p>
+        </div>
+        <button
+          onClick={() => {
+            localStorage.setItem('guest_ad_dismissed', '1');
+            setDismissed(true);
+          }}
+          className="shrink-0 text-xs text-brand-400 hover:text-brand-600"
+          aria-label="Dismiss"
+        >
+          ✕
+        </button>
+      </div>
+      <ul className="mt-4 space-y-2">
+        {[
+          'View all your tickets in one place',
+          'Faster checkout — details pre-filled next time',
+          'Event reminders before your events',
+          'Earn rewards by referring friends',
+          'Self-serve refund requests',
+        ].map((b) => (
+          <li key={b} className="flex items-center gap-2 text-xs text-brand-800">
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[9px] font-extrabold text-white">✓</span>
+            {b}
+          </li>
+        ))}
+      </ul>
+      <Link
+        href={`/register?${params.toString()}`}
+        className="mt-5 flex w-full items-center justify-center rounded-xl bg-brand-600 py-3 text-sm font-bold text-white transition hover:bg-brand-500"
+      >
+        Create free account →
+      </Link>
+      <p className="mt-2 text-center text-[11px] text-brand-500">Already have an account? <Link href="/login" className="font-bold underline">Sign in</Link></p>
+    </div>
+  );
+}
+
 interface Order {
   id: string;
   status: 'PENDING' | 'PAID' | 'CANCELLED' | 'REFUNDED';
@@ -76,6 +134,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
   const isPending   = order.status === 'PENDING';
   const isCancelled = order.status === 'CANCELLED';
   const price       = Number(order.totalAmount);
+  const isGuest     = typeof window !== 'undefined' && !localStorage.getItem('access_token');
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4">
@@ -186,6 +245,10 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
             )}
           </div>
         </div>
+
+        {isPaid && isGuest && (
+          <GuestAccountAd email={order.buyerEmail} name={order.buyerName} />
+        )}
 
         <p className="mt-6 text-center text-xs text-slate-400">
           Tickets are emailed to the address provided at checkout.

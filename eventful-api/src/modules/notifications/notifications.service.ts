@@ -126,8 +126,8 @@ export const notificationsService = {
       where: { id: ticketId },
       include: {
         eventee: { select: { email: true, fullName: true } },
-        order:   { select: { buyerName: true, buyerEmail: true } },
-        event:   { select: { id: true, title: true, venue: true, startsAt: true, price: true, currency: true, confirmationMessage: true } },
+        order:   { select: { buyerName: true, buyerEmail: true, totalAmount: true, quantity: true } },
+        event:   { select: { id: true, title: true, venue: true, startsAt: true, currency: true, confirmationMessage: true } },
       },
     });
 
@@ -147,12 +147,17 @@ export const notificationsService = {
       const qrPngBuffer = await qrService.generatePng(qrPayload);
       const qrImageUrl  = `${apiBaseUrl}/v1/tickets/${ticket.id}/qr.png`;
 
+      // Use actual unit price paid (totalAmount / quantity), not the stale event.price
+      const unitPrice = ticket.order
+        ? (Number(ticket.order.totalAmount) / Math.max(ticket.order.quantity, 1)).toString()
+        : '0';
+
       const pdfBuffer = await generateTicketPdf({
         fullName:            recipientName,
         eventTitle:          ticket.event.title,
         venue:               ticket.event.venue,
         startsAt:            ticket.event.startsAt,
-        price:               ticket.event.price.toString(),
+        price:               unitPrice,
         currency:            ticket.event.currency,
         ticketId:            ticket.id,
         qrPngBuffer,
@@ -167,7 +172,7 @@ export const notificationsService = {
           eventTitle:          ticket.event.title,
           venue:               ticket.event.venue,
           startsAt:            ticket.event.startsAt,
-          price:               ticket.event.price.toString(),
+          price:               unitPrice,
           currency:            ticket.event.currency,
           ticketId:            ticket.id,
           qrImageUrl,

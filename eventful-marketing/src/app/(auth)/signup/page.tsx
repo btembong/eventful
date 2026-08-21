@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { EyeIcon, EyeOffIcon, TicketIcon, MailIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
@@ -95,9 +96,18 @@ function PasswordStrength({ password }: { password: string }) {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SignupPage() {
+  const searchParams = useSearchParams();
   const [fullName,      setFullName]      = useState('');
   const [email,         setEmail]         = useState('');
   const [phone,         setPhone]         = useState('');
+
+  // Pre-fill from query params (e.g. when coming from the guest account ad)
+  useEffect(() => {
+    const n = searchParams.get('name');
+    const e = searchParams.get('email');
+    if (n) setFullName(n);
+    if (e) setEmail(e);
+  }, [searchParams]);
   const [password,      setPassword]      = useState('');
   const [confirm,       setConfirm]       = useState('');
   const [showPw,        setShowPw]        = useState(false);
