@@ -15,6 +15,8 @@ import {
   ShieldCheckIcon,
   WalletIcon,
   QrCodeIcon,
+  CalendarIcon,
+  UsersGroupIcon,
 } from '@/components/icons';
 
 // ─── Category config (display labels mapped to API enum values) ───────────────
@@ -419,60 +421,77 @@ export default async function HomePage() {
       <section className="bg-brand-950 py-12 sm:py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
           <div className="grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
-            {/* Creator dashboard mockup */}
+            {/* Creator dashboard mockup — mirrors actual /dashboard/creator UI */}
             <div className="order-2 lg:order-1">
-              <div className="rounded-2xl border border-white/10 bg-brand-900 p-6 shadow-2xl">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white/60">Event Dashboard</p>
-                  <span className="rounded-full bg-brand-500/20 px-3 py-1 text-xs font-bold text-brand-300">● Live</span>
-                </div>
-                <p className="mt-2 text-xl font-bold text-white">Afro Beats Summer Fest</p>
+              <div className="card-cartoon overflow-hidden rounded-2xl bg-slate-50">
 
-                <div className="mt-6 grid grid-cols-3 gap-3">
-                  {[
-                    { label: 'Tickets Sold', value: '847', sub: 'of 1,000', color: 'text-brand-300' },
-                    { label: 'Revenue', value: 'XAF 12.7M', sub: '+3% today', color: 'text-brand-300' },
-                    { label: 'Check-ins', value: '612', sub: '72% rate', color: 'text-brand-400' },
-                  ].map(({ label, value, sub, color }) => (
-                    <div key={label} className="rounded-xl bg-white/5 p-4">
-                      <p className="text-xs text-white/40">{label}</p>
-                      <p className={`mt-1 text-lg font-bold ${color}`}>{value}</p>
-                      <p className="text-xs text-white/30">{sub}</p>
+                {/* ── Hero banner ── */}
+                <div className="relative overflow-hidden bg-brand-950 px-6 py-6">
+                  <div className="relative z-10">
+                    <p className="text-xs font-semibold text-brand-400">Good morning</p>
+                    <p className="mt-0.5 text-xl font-black text-white">AURÉLIEN N.</p>
+                    <p className="mt-1 text-xs text-white/50">Here&apos;s how your events are doing today.</p>
+                    <div className="mt-4 inline-flex items-center gap-1.5 rounded-xl border-2 border-white/20 bg-white px-4 py-2 text-xs font-extrabold text-brand-950">
+                      <span className="text-sm font-black">+</span> New event
                     </div>
-                  ))}
-                </div>
-
-                {/* Capacity bar */}
-                <div className="mt-6">
-                  <div className="flex justify-between text-xs text-white/50">
-                    <span>Capacity</span>
-                    <span>84.7%</span>
                   </div>
-                  <div className="mt-2 h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div className="h-2 rounded-full bg-gradient-to-r from-brand-600 to-brand-400" style={{ width: '84.7%' }} />
+                  {/* Decorative illustration placeholder */}
+                  <div className="pointer-events-none absolute right-0 top-0 flex h-full w-32 items-center justify-end pr-4 opacity-60">
+                    <svg viewBox="0 0 80 80" className="h-20 w-20" fill="none">
+                      <circle cx="40" cy="25" r="16" fill="#F07200" opacity="0.8"/>
+                      <rect x="20" y="42" width="40" height="28" rx="6" fill="#F07200" opacity="0.5"/>
+                      <rect x="28" y="50" width="24" height="3" rx="1.5" fill="white" opacity="0.8"/>
+                      <rect x="28" y="57" width="16" height="3" rx="1.5" fill="white" opacity="0.5"/>
+                    </svg>
                   </div>
                 </div>
 
-                {/* Recent sales */}
-                <div className="mt-5 space-y-2">
+                {/* ── KPI cards ── */}
+                <div className="grid grid-cols-2 gap-3 p-4">
                   {[
-                    { name: 'Amaka O.', time: '2 min ago', amount: 'XAF 15,000' },
-                    { name: 'Kwame A.', time: '7 min ago', amount: 'XAF 15,000' },
-                    { name: 'Tunde B.', time: '14 min ago', amount: 'XAF 30,000' },
-                  ].map(({ name, time, amount }) => (
-                    <div key={name} className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-2.5">
-                      <div className="flex items-center gap-3">
-                        <div className="h-7 w-7 rounded-full bg-brand-600 flex items-center justify-center text-xs font-bold text-brand-200">
-                          {name[0]}
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-white/80">{name}</p>
-                          <p className="text-xs text-white/30">{time}</p>
+                    { label: 'REVENUE',       value: 'XAF 12.7M', sub: 'lifetime earnings',  Icon: TagPriceIcon },
+                    { label: 'TICKETS SOLD',  value: '847',        sub: 'all time',           Icon: TicketIcon },
+                    { label: 'ACTIVE EVENTS', value: '3',          sub: 'on sale now',        Icon: CalendarIcon },
+                    { label: 'CHECKED IN',    value: '612',        sub: 'total attendees',    Icon: UsersGroupIcon },
+                  ].map(({ label, value, sub, Icon }) => (
+                    <div key={label} className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50">
+                          <Icon className="h-4 w-4 text-brand-500" />
                         </div>
                       </div>
-                      <span className="text-xs font-bold text-brand-300">{amount}</span>
+                      <p className="text-xl font-black tracking-tight text-slate-900">{value}</p>
+                      <p className="text-[10px] text-slate-400">{sub}</p>
                     </div>
                   ))}
+                </div>
+
+                {/* ── Recent events section ── */}
+                <div className="px-4 pb-4">
+                  <div className="mb-3 flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-900">Recent events</p>
+                    <span className="text-[10px] font-semibold text-brand-600">View all →</span>
+                  </div>
+                  {/* Filter tabs */}
+                  <div className="mb-3 flex gap-1 rounded-xl bg-slate-100 p-1">
+                    {['All', 'On sale', 'Draft', 'Ended', 'Cancelled'].map((t, i) => (
+                      <span key={t} className={`rounded-lg px-2.5 py-1 text-[10px] font-bold whitespace-nowrap ${i === 0 ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400'}`}>
+                        {t}{i > 0 && <span className="ml-1 text-[9px]">0</span>}
+                      </span>
+                    ))}
+                  </div>
+                  {/* Empty state */}
+                  <div className="flex flex-col items-center py-6 text-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-950">
+                      <CalendarIcon className="h-5 w-5 text-brand-500" />
+                    </div>
+                    <p className="mt-2 text-xs font-semibold text-slate-700">No events yet</p>
+                    <p className="mt-0.5 text-[10px] text-slate-400">Create your first event to start selling tickets.</p>
+                    <div className="btn-cartoon mt-3 px-4 py-1.5 text-[10px]">
+                      + Create event
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
