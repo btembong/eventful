@@ -350,21 +350,32 @@ export function tplBootcampWelcome(opts: {
   );
 }
 
-/** Bootcamp accepted — payment instructions */
+/** Bootcamp accepted — payment instructions + referral code */
 export function tplBootcampAccepted(opts: {
   fullName:      string;
   paymentPlan:   'FULL' | 'INSTALLMENT';
   paymentMethod: string;
+  referralCode?: string;
 }): string {
   const amountDue = opts.paymentPlan === 'FULL' ? '$250' : '$135';
   const planLabel = opts.paymentPlan === 'FULL' ? 'Full payment — $250' : 'First instalment — $135 (second due Sep 16)';
   const payInstructions: Record<string, string> = {
-    'MTN Mobile Money':              'Send to <strong>+237 690 075 059</strong> (Digos Technologies). Use your full name as reference.',
-    'Orange Money':                  'Send to <strong>+237 690 075 059</strong> (Digos Technologies). Use your full name as reference.',
-    'Credit / Debit Card (Stripe)':  'You will receive a secure Stripe payment link within 24 hours.',
-    'PayPal':                        'Send to <strong>bootcamp@digostechnologies.com</strong> via PayPal Goods & Services. Include your full name in the note.',
+    'MTN Mobile Money': `Dial <strong>*126#</strong> → Transfer → Enter <strong>673192784</strong> → Amount: <strong>${amountDue}</strong>. Use your full name as reference.`,
+    'Orange Money':     `Dial <strong>#150#</strong> → Envoyer → Enter <strong>690075059</strong> → Amount: <strong>${amountDue}</strong>. Use your full name as reference.`,
+    'PayPal':           `Send <strong>${amountDue}</strong> to <strong>bootcamp@digostechnologies.com</strong> via PayPal Goods &amp; Services. Include your full name in the note.`,
   };
   const payDetail = payInstructions[opts.paymentMethod] ?? 'Payment instructions will follow in a separate message.';
+
+  const referralBlock = opts.referralCode ? `
+    <div style="background:#F0FDF4;border:2px solid #22C55E;border-radius:12px;padding:20px;margin:24px 0;">
+      <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#16A34A;">🎁 Your Referral Code — Earn $30 per friend</p>
+      <p style="margin:0 0 12px 0;font-size:14px;color:#166534;">Share your unique code and earn <strong>$30</strong> for every friend who applies and pays.</p>
+      <div style="background:#fff;border:2px dashed #22C55E;border-radius:8px;padding:12px;text-align:center;">
+        <span style="font-size:24px;font-weight:900;letter-spacing:0.15em;color:#16A34A;">${opts.referralCode}</span>
+      </div>
+      <p style="margin:10px 0 0 0;font-size:12px;color:#166534;text-align:center;">Share this link: <a href="https://eventful.app/bootcamp?ref=${opts.referralCode}" style="color:#16A34A;font-weight:600;">eventful.app/bootcamp?ref=${opts.referralCode}</a></p>
+    </div>` : '';
+
   return shell(
     greeting(opts.fullName) +
     label('Bootcamp · Application Accepted') +
@@ -380,8 +391,9 @@ export function tplBootcampAccepted(opts: {
       <p style="margin:0;font-size:14px;line-height:1.6;color:${TEXT};">${payDetail}</p>
     </div>` +
     p('Once we confirm your payment, you\'ll receive your onboarding kit and Discord/WhatsApp group invite before September 2.') +
+    referralBlock +
     divider() +
-    p('Questions? Reply to this email or WhatsApp: <a href="https://wa.me/237690075059" style="color:${ORANGE};font-weight:600;">+237 690 075 059</a>') +
+    p('Questions? Reply to this email or WhatsApp: <a href="https://wa.me/237690075059" style="color:#F07200;font-weight:600;">+237 690 075 059</a>') +
     pSmall('If you cannot pay within 48 hours, please reply to this email to arrange an extension. Unpaid seats are released after 48 hours.') +
     pSmall('Digos Technologies · bootcamp@digostechnologies.com')
   );

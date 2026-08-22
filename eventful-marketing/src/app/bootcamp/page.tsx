@@ -11,17 +11,20 @@ import {
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface FormData {
-  fullName: string;
-  email: string;
-  phone: string;
-  country: string;
-  background: string;
-  goal: string;
-  paymentPlan: 'full' | 'installment';
-  paymentMethod: string;
-  referral: string;
-  consent: boolean;
-  age: boolean;
+  fullName:           string;
+  email:              string;
+  phone:              string;
+  country:            string;
+  background:         string;
+  goal:               string;
+  paymentPlan:        'full' | 'installment';
+  paymentMethod:      string;
+  referral:           string;
+  referralCodeUsed:   string;
+  proofOfPayment:     string;   // base64
+  proofOfPaymentName: string;
+  consent:            boolean;
+  age:                boolean;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -283,7 +286,56 @@ const FAQS = [
   },
 ];
 
-const PAYMENT_METHODS = ['MTN Mobile Money', 'Orange Money', 'Credit / Debit Card (Stripe)', 'PayPal'];
+const PAYMENT_METHODS = ['MTN Mobile Money', 'Orange Money', 'PayPal'] as const;
+
+type PaymentMethod = typeof PAYMENT_METHODS[number];
+
+interface PaymentInstructions {
+  steps: string[];
+  number?: string;
+  ussd?: string;
+  note?: string;
+}
+
+const PAYMENT_INSTRUCTIONS: Record<PaymentMethod, PaymentInstructions> = {
+  'MTN Mobile Money': {
+    ussd:   '*126#',
+    number: '673192784',
+    steps: [
+      'Dial *126# on your phone',
+      'Select "3. Transfer Money"',
+      'Enter recipient number: 673192784',
+      'Enter the amount ($250 or $135)',
+      'Confirm with your PIN',
+      'Upload your payment screenshot below',
+    ],
+    note: 'Use your full name as the payment reference.',
+  },
+  'Orange Money': {
+    ussd:   '#150#',
+    number: '690075059',
+    steps: [
+      'Dial #150# on your phone',
+      'Select "1. Envoyer de l\'argent"',
+      'Enter recipient number: 690075059',
+      'Enter the amount ($250 or $135)',
+      'Confirm with your PIN',
+      'Upload your payment screenshot below',
+    ],
+    note: 'Use your full name as the payment reference.',
+  },
+  'PayPal': {
+    steps: [
+      'Open PayPal and click "Send"',
+      'Send to: bootcamp@digostechnologies.com',
+      'Choose "Goods & Services"',
+      'Enter the amount ($250 or $135)',
+      'Add your full name in the note',
+      'Upload your payment screenshot below',
+    ],
+    note: 'Only PayPal Goods & Services is accepted (not Friends & Family).',
+  },
+};
 
 // ─── Countdown ──────────────────────────────────────────────────────────────────
 
@@ -350,10 +402,19 @@ export default function BootcampPage() {
   // Application close countdown
   const appClosed = APP_CLOSE_DATE.getTime() < Date.now();
 
+  // Pre-fill referral code from ?ref= URL param
+  const [initRef] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('ref') ?? '';
+  });
+
   const [form, setForm] = useState<FormData>({
     fullName: '', email: '', phone: '', country: '',
     background: '', goal: '', paymentPlan: 'full',
-    paymentMethod: '', referral: '', consent: false, age: false,
+    paymentMethod: '', referral: '',
+    referralCodeUsed: initRef,
+    proofOfPayment: '', proofOfPaymentName: '',
+    consent: false, age: false,
   });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -366,14 +427,15 @@ export default function BootcampPage() {
 
   function validate() {
     const e: Partial<Record<keyof FormData, string>> = {};
-    if (!form.fullName.trim())    e.fullName    = 'Full name is required';
-    if (!form.email.match(/.+@.+\..+/)) e.email = 'Valid email required';
-    if (!form.phone.trim())       e.phone       = 'Phone number is required';
-    if (!form.country.trim())     e.country     = 'Country is required';
-    if (!form.background)         e.background  = 'Please select your background';
-    if (!form.paymentMethod)      e.paymentMethod = 'Select a payment method';
-    if (!form.consent)            e.consent     = 'You must accept the terms';
-    if (!form.age)                e.age         = 'You must confirm your age';
+    if (!form.fullName.trim())        e.fullName      = 'Full name is required';
+    if (!form.email.match(/.+@.+\..+/)) e.email       = 'Valid email required';
+    if (!form.phone.trim())           e.phone         = 'Phone number is required';
+    if (!form.country.trim())         e.country       = 'Country is required';
+    if (!form.background)             e.background    = 'Please select your background';
+    if (!form.paymentMethod)          e.paymentMethod = 'Select a payment method';
+    if (!form.proofOfPayment)         e.proofOfPayment = 'Please upload proof of payment';
+    if (!form.consent)                e.consent       = 'You must accept the terms';
+    if (!form.age)                    e.age           = 'You must confirm your age';
     return e;
   }
 
@@ -387,15 +449,18 @@ export default function BootcampPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName:      form.fullName,
-          email:         form.email,
-          phone:         form.phone,
-          country:       form.country,
-          background:    form.background,
-          goal:          form.goal || undefined,
-          paymentPlan:   form.paymentPlan === 'full' ? 'FULL' : 'INSTALLMENT',
-          paymentMethod: form.paymentMethod,
-          referral:      form.referral || undefined,
+          fullName:           form.fullName,
+          email:              form.email,
+          phone:              form.phone,
+          country:            form.country,
+          background:         form.background,
+          goal:               form.goal || undefined,
+          paymentPlan:        form.paymentPlan === 'full' ? 'FULL' : 'INSTALLMENT',
+          paymentMethod:      form.paymentMethod,
+          referral:           form.referral || undefined,
+          referralCodeUsed:   form.referralCodeUsed.trim().toUpperCase() || undefined,
+          proofOfPayment:     form.proofOfPayment || undefined,
+          proofOfPaymentName: form.proofOfPaymentName || undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -1015,17 +1080,29 @@ export default function BootcampPage() {
           </div>
 
           {submitted ? (
-            <div className="rounded-2xl border-2 border-brand-950 bg-white p-10 text-center" style={{ boxShadow: '6px 6px 0 #333333' }}>
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-brand-950 bg-brand-600 text-3xl shadow-[3px_3px_0_#333333]">
-                🎉
+            <div className="space-y-5">
+              <div className="rounded-2xl border-2 border-brand-950 bg-white p-10 text-center" style={{ boxShadow: '6px 6px 0 #333333' }}>
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-brand-950 bg-brand-600 shadow-[3px_3px_0_#333333]">
+                  <CheckCircleIcon className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="mt-5 text-xl font-black text-slate-900">Application received!</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                  We&apos;ll review your application and email you within 48 hours. If accepted, your referral code will be in that email — share it and earn <strong className="text-slate-700">$30 per friend who pays</strong>.
+                </p>
+                <p className="mt-4 text-xs text-slate-400">
+                  Questions? Email <a href="mailto:bootcamp@digostechnologies.com" className="text-brand-600 font-semibold">bootcamp@digostechnologies.com</a>
+                  {' '}or{' '}
+                  <a href="https://wa.me/237690075059" className="text-brand-600 font-semibold">WhatsApp</a>
+                </p>
               </div>
-              <h3 className="mt-5 text-xl font-black text-slate-900">Application received!</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-500">
-                We&apos;ll review your application and email you within 48 hours with next steps and payment instructions. Check your spam folder just in case.
-              </p>
-              <p className="mt-4 text-xs text-slate-400">
-                Questions? Email <a href="mailto:bootcamp@digostechnologies.com" className="text-brand-600 font-semibold">bootcamp@digostechnologies.com</a>
-              </p>
+
+              {/* Referral teaser */}
+              <div className="rounded-2xl border-2 border-green-400 bg-green-50 px-6 py-5" style={{ boxShadow: '4px 4px 0 #16a34a40' }}>
+                <p className="text-xs font-black uppercase tracking-widest text-green-700">Refer a friend — Earn $30</p>
+                <p className="mt-2 text-sm text-green-800">
+                  Once accepted, you&apos;ll receive a personal referral code. Every friend who applies and pays earns you <strong>$30</strong>. Your code will be in your acceptance email.
+                </p>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate>
@@ -1095,13 +1172,14 @@ export default function BootcampPage() {
                 <div className="border-y-2 border-slate-100 bg-brand-950 px-6 py-3">
                   <p className="text-xs font-black uppercase tracking-widest text-white/60">03 — Payment</p>
                 </div>
-                <div className="p-6 space-y-4">
+                <div className="p-6 space-y-5">
+                  {/* Payment plan */}
                   <div>
                     <p className="mb-2 text-xs font-bold text-slate-700">Payment plan <span className="text-red-500">*</span></p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {([
-                        { value: 'full',        label: 'Pay in full',     amount: '$250',      note: 'Save $20' },
-                        { value: 'installment', label: '2 Installments',  amount: '$135 × 2',  note: '$135 due today' },
+                        { value: 'full',        label: 'Pay in full',    amount: '$250',     note: 'Save $20' },
+                        { value: 'installment', label: '2 Installments', amount: '$135 × 2', note: '$135 due now' },
                       ] as const).map(opt => (
                         <label key={opt.value} className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 p-4 transition ${form.paymentPlan === opt.value ? 'border-brand-600 bg-brand-50' : 'border-slate-200 bg-white hover:border-brand-300'}`}>
                           <input type="radio" name="plan" value={opt.value} checked={form.paymentPlan === opt.value} onChange={() => set('paymentPlan', opt.value)} className="accent-brand-600" />
@@ -1113,24 +1191,120 @@ export default function BootcampPage() {
                       ))}
                     </div>
                   </div>
-                  <Field label="Preferred payment method" error={errors.paymentMethod} required>
+
+                  {/* Amount due callout */}
+                  <div className="rounded-xl border-2 border-brand-200 bg-brand-50 px-4 py-3">
+                    <p className="text-sm font-extrabold text-brand-800">
+                      Amount due now: <span className="text-brand-600">{form.paymentPlan === 'full' ? '$250' : '$135'}</span>
+                    </p>
+                    <p className="mt-0.5 text-xs text-brand-600">Your seat is reserved once payment is confirmed.</p>
+                  </div>
+
+                  {/* Payment method selector */}
+                  <Field label="Payment method" error={errors.paymentMethod} required>
                     <select value={form.paymentMethod} onChange={e => set('paymentMethod', e.target.value)} className={input(!!errors.paymentMethod)}>
                       <option value="">Select method…</option>
                       {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                   </Field>
-                  <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
-                    <strong>Due today: {form.paymentPlan === 'full' ? '$250' : '$135'}</strong><br />
-                    <span className="text-xs text-brand-600">Payment instructions will be emailed after your application is accepted. Your seat is reserved upon payment confirmation.</span>
+
+                  {/* Payment instruction panel — opens when method is selected */}
+                  {form.paymentMethod && PAYMENT_INSTRUCTIONS[form.paymentMethod as PaymentMethod] && (() => {
+                    const instr = PAYMENT_INSTRUCTIONS[form.paymentMethod as PaymentMethod];
+                    return (
+                      <div className="overflow-hidden rounded-2xl border-2 border-brand-950" style={{ boxShadow: '4px 4px 0 #333333' }}>
+                        <div className="flex items-center justify-between bg-brand-950 px-5 py-3">
+                          <p className="text-xs font-black uppercase tracking-widest text-brand-300">How to pay via {form.paymentMethod}</p>
+                          {instr.ussd && (
+                            <span className="rounded-lg border border-white/20 bg-white/10 px-3 py-1 font-mono text-sm font-black text-white">
+                              {instr.ussd}
+                            </span>
+                          )}
+                        </div>
+                        {instr.number && (
+                          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+                            <p className="text-xs font-bold text-slate-500">Send to</p>
+                            <p className="font-mono text-lg font-black text-slate-900 tracking-wider">{instr.number}</p>
+                          </div>
+                        )}
+                        <ol className="space-y-2 px-5 py-4">
+                          {instr.steps.map((step, i) => (
+                            <li key={i} className="flex items-start gap-3 text-sm text-slate-700">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[11px] font-black text-brand-700">{i + 1}</span>
+                              {step}
+                            </li>
+                          ))}
+                        </ol>
+                        {instr.note && (
+                          <div className="border-t border-slate-100 bg-amber-50 px-5 py-3">
+                            <p className="text-xs text-amber-700"><strong>Note:</strong> {instr.note}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Proof of payment upload */}
+                  <div>
+                    <p className="mb-1.5 text-xs font-bold text-slate-700">
+                      Proof of payment <span className="text-red-500">*</span>
+                    </p>
+                    <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 transition ${errors.proofOfPayment ? 'border-red-400 bg-red-50' : form.proofOfPayment ? 'border-green-400 bg-green-50' : 'border-slate-300 bg-slate-50 hover:border-brand-400 hover:bg-brand-50'}`}>
+                      {form.proofOfPayment ? (
+                        <>
+                          <span className="text-2xl">✓</span>
+                          <p className="text-xs font-bold text-green-700">{form.proofOfPaymentName}</p>
+                          <p className="text-[10px] text-green-600">Click to replace</p>
+                        </>
+                      ) : (
+                        <>
+                          <WalletIcon className="h-8 w-8 text-slate-400" />
+                          <p className="text-sm font-bold text-slate-600">Upload payment screenshot or receipt</p>
+                          <p className="text-[10px] text-slate-400">JPG, PNG or PDF · Max 5 MB</p>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 5 * 1024 * 1024) {
+                            setErrors(err => ({ ...err, proofOfPayment: 'File must be under 5 MB' }));
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            set('proofOfPayment', reader.result as string);
+                            set('proofOfPaymentName', file.name);
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                    {errors.proofOfPayment && <p className="mt-1 text-[11px] text-red-500">{errors.proofOfPayment}</p>}
                   </div>
                 </div>
 
                 {/* Section: Referral */}
-                <div className="border-y-2 border-slate-100 px-6 py-3">
-                  <Field label="How did you hear about this bootcamp? (optional)" className="py-2">
+                <div className="border-y-2 border-slate-100 bg-slate-50 px-6 py-5 space-y-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Referral (optional)</p>
+                  <Field label="Got a referral code?">
+                    <input
+                      type="text"
+                      value={form.referralCodeUsed}
+                      onChange={e => set('referralCodeUsed', e.target.value.toUpperCase())}
+                      placeholder="e.g. BLAISE-X4K2"
+                      className={`${input(false)} font-mono uppercase tracking-widest`}
+                      maxLength={12}
+                    />
+                    <p className="mt-1 text-[10px] text-slate-400">Enter a friend&apos;s code — they&apos;ll earn $30 when you pay.</p>
+                  </Field>
+                  <Field label="How did you hear about this bootcamp?">
                     <input
                       type="text" value={form.referral} onChange={e => set('referral', e.target.value)}
-                      placeholder="e.g. Twitter, a friend, Instagram…"
+                      placeholder="e.g. Twitter, WhatsApp, a friend…"
                       className={input(false)}
                     />
                   </Field>

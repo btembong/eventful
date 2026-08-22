@@ -4,20 +4,23 @@ import { bootcampService } from './bootcamp.service';
 import { requireAuth, requireRole } from '@/middleware/auth.guard';
 
 const applySchema = z.object({
-  fullName:      z.string().min(2).max(100),
-  email:         z.string().email(),
-  phone:         z.string().min(6).max(30),
-  country:       z.string().min(2).max(80),
-  background:    z.enum(['zero', 'basics', 'js', 'other']),
-  goal:          z.string().max(500).optional(),
-  paymentPlan:   z.enum(['FULL', 'INSTALLMENT']),
-  paymentMethod: z.string().min(2).max(80),
-  referral:      z.string().max(200).optional(),
+  fullName:           z.string().min(2).max(100),
+  email:              z.string().email(),
+  phone:              z.string().min(6).max(30),
+  country:            z.string().min(2).max(80),
+  background:         z.enum(['zero', 'basics', 'js', 'other']),
+  goal:               z.string().max(500).optional(),
+  paymentPlan:        z.enum(['FULL', 'INSTALLMENT']),
+  paymentMethod:      z.string().min(2).max(80),
+  referral:           z.string().max(200).optional(),
+  referralCodeUsed:   z.string().max(20).optional(),
+  proofOfPayment:     z.string().optional(),      // base64
+  proofOfPaymentName: z.string().max(200).optional(),
 });
 
 const bootcampRoutes: FastifyPluginAsync = async (app) => {
 
-  // ── GET /bootcamp/stats — public (seat counter) ────────────────────────────
+  // ── GET /bootcamp/stats — public ───────────────────────────────────────────
   app.get('/stats', async (_req, reply) => {
     const stats = await bootcampService.getStats();
     return reply.send(stats);
@@ -36,6 +39,22 @@ const bootcampRoutes: FastifyPluginAsync = async (app) => {
     });
   });
 
+  // ── GET /bootcamp/referral/validate/:code — public ─────────────────────────
+  app.get('/referral/validate/:code', async (req, reply) => {
+    const { code } = req.params as { code: string };
+    const record   = await bootcampService.validateReferralCode(code);
+    if (!record) return reply.status(404).send({ error: 'Invalid referral code' });
+    return reply.send({ code: record.code, ownerName: record.ownerName });
+  });
+
+  // ── GET /bootcamp/referral/stats/:code — public ────────────────────────────
+  app.get('/referral/stats/:code', async (req, reply) => {
+    const { code } = req.params as { code: string };
+    const stats    = await bootcampService.getReferralStats(code);
+    if (!stats) return reply.status(404).send({ error: 'Referral code not found' });
+    return reply.send(stats);
+  });
+
   // ── GET /bootcamp/applications — admin only ────────────────────────────────
   app.get('/applications', {
     preHandler: [requireAuth, requireRole('ADMIN')],
@@ -45,7 +64,17 @@ const bootcampRoutes: FastifyPluginAsync = async (app) => {
     return reply.send(applications);
   });
 
-  // ── PATCH /bootcamp/applications/:id — admin only ──────────────────────────
+  // ── GET /bootcamp/applications/:id — admin only ────────────────────────────
+  app.get('/applications/:id', {
+    preHandler: [requireAuth, requireRole('ADMIN')],
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const app    = await bootcampService.getApplication(id);
+    if (!app) return reply.status(404).send({ error: 'Not found' });
+    return reply.send(app);
+  });
+
+  // ── PATCH /bootcamp/applications/:id — admin only ─────────────────────────
   app.patch('/applications/:id', {
     preHandler: [requireAuth, requireRole('ADMIN')],
   }, async (req, reply) => {
@@ -57,16 +86,6 @@ const bootcampRoutes: FastifyPluginAsync = async (app) => {
     }
     const updated = await bootcampService.updateStatus(id, status ?? 'PENDING', adminNotes);
     return reply.send(updated);
-  });
-
-  // ── GET /bootcamp/applications/:id — admin only ────────────────────────────
-  app.get('/applications/:id', {
-    preHandler: [requireAuth, requireRole('ADMIN')],
-  }, async (req, reply) => {
-    const { id } = req.params as { id: string };
-    const app    = await bootcampService.getApplication(id);
-    if (!app) return reply.status(404).send({ error: 'Not found' });
-    return reply.send(app);
   });
 };
 

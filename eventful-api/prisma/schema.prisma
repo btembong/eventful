@@ -557,23 +557,44 @@ enum BootcampAppStatus {
 }
 
 model BootcampApplication {
-  id            String               @id @default(cuid())
-  fullName      String
-  email         String
-  phone         String
-  country       String
-  background    String               // coding experience level
-  goal          String?              // optional motivation text
-  paymentPlan   BootcampPaymentPlan
-  paymentMethod String
-  referral      String?
-  status        BootcampAppStatus    @default(PENDING)
-  adminNotes    String?
-  cohort        String               @default("2026-09")
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  id                  String                @id @default(cuid())
+  fullName            String
+  email               String
+  phone               String
+  country             String
+  background          String                // coding experience level
+  goal                String?               // optional motivation text
+  paymentPlan         BootcampPaymentPlan
+  paymentMethod       String
+  referral            String?               // free-text "how did you hear"
+  referralCodeUsed    String?               // structured referral code (links to BootcampReferralCode)
+  proofOfPayment      String?               // base64 encoded file
+  proofOfPaymentName  String?               // original filename
+  status              BootcampAppStatus     @default(PENDING)
+  adminNotes          String?
+  cohort              String                @default("2026-09")
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  referralCode        BootcampReferralCode? @relation(fields: [referralCodeUsed], references: [code])
 
   @@index([email])
   @@index([status])
   @@index([cohort])
+  @@index([referralCodeUsed])
+}
+
+model BootcampReferralCode {
+  id            String                @id @default(cuid())
+  code          String                @unique
+  ownerEmail    String
+  ownerName     String
+  cohort        String                @default("2026-09")
+  totalEarnings Int                   @default(0)   // in USD
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  uses          BootcampApplication[]
+
+  @@index([ownerEmail])
 }
