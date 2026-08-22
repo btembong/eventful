@@ -201,6 +201,7 @@ export default async function HomePage() {
                     date="Aug 30, 2026"
                     time="7:00 PM"
                     price="XAF 15,000"
+                    notchColor="bg-white"
                   />
                 </div>
                 {/* Check-in badge */}
@@ -218,7 +219,7 @@ export default async function HomePage() {
               {/* Desktop: stacked two-ticket layout */}
               <div className="relative hidden lg:block" style={{ width: '480px', height: '440px' }}>
                 {/* Back ticket */}
-                <div className="absolute top-10 left-6" style={{ transform: 'rotate(4deg)', opacity: 0.65 }}>
+                <div className="absolute top-10 left-6" style={{ transform: 'rotate(4deg)', opacity: 0.75 }}>
                   <TicketCard
                     eventName="Lagos Theater Night"
                     category="Theater"
@@ -226,6 +227,7 @@ export default async function HomePage() {
                     date="Sep 5, 2026"
                     time="6:30 PM"
                     price="XAF 8,000"
+                    notchColor="bg-white"
                   />
                 </div>
                 {/* Front ticket */}
