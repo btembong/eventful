@@ -17,6 +17,12 @@ const applySchema = z.object({
 
 const bootcampRoutes: FastifyPluginAsync = async (app) => {
 
+  // ── GET /bootcamp/stats — public (seat counter) ────────────────────────────
+  app.get('/stats', async (_req, reply) => {
+    const stats = await bootcampService.getStats();
+    return reply.send(stats);
+  });
+
   // ── POST /bootcamp/apply — public ──────────────────────────────────────────
   app.post('/apply', async (req, reply) => {
     const parsed = applySchema.safeParse(req.body);
@@ -43,14 +49,24 @@ const bootcampRoutes: FastifyPluginAsync = async (app) => {
   app.patch('/applications/:id', {
     preHandler: [requireAuth, requireRole('ADMIN')],
   }, async (req, reply) => {
-    const { id }                    = req.params as { id: string };
-    const { status, adminNotes }    = req.body as { status?: string; adminNotes?: string };
+    const { id }                 = req.params as { id: string };
+    const { status, adminNotes } = req.body as { status?: string; adminNotes?: string };
     const valid = ['PENDING', 'ACCEPTED', 'PAID', 'REJECTED'];
     if (status && !valid.includes(status)) {
       return reply.status(400).send({ error: 'Invalid status' });
     }
     const updated = await bootcampService.updateStatus(id, status ?? 'PENDING', adminNotes);
     return reply.send(updated);
+  });
+
+  // ── GET /bootcamp/applications/:id — admin only ────────────────────────────
+  app.get('/applications/:id', {
+    preHandler: [requireAuth, requireRole('ADMIN')],
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const app    = await bootcampService.getApplication(id);
+    if (!app) return reply.status(404).send({ error: 'Not found' });
+    return reply.send(app);
   });
 };
 

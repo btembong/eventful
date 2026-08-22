@@ -22,7 +22,9 @@ interface FormData {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const START_DATE = new Date('2026-09-02T09:00:00');
+const START_DATE       = new Date('2026-09-02T09:00:00');
+const APP_CLOSE_DATE   = new Date('2026-08-25T23:59:59');
+const API_URL          = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 const CURRICULUM = [
   {
@@ -54,6 +56,50 @@ const CURRICULUM = [
     title: 'AI Tools & Capstone',
     color: 'bg-slate-900',
     topics: ['Building with AI (Claude, Copilot, Cursor)', 'Capstone project: full-stack app', 'Code review & portfolio polish', 'Demo day & certificates'],
+  },
+];
+
+const SCHEDULE = [
+  { day: 'Monday',    time: '7:00 – 9:00 PM WAT', type: 'Live Session',     note: 'New concepts + live coding' },
+  { day: 'Wednesday', time: '7:00 – 9:00 PM WAT', type: 'Live Session',     note: 'Deep-dive + Q&A' },
+  { day: 'Friday',    time: '7:00 – 9:00 PM WAT', type: 'Live Session',     note: 'Project workshop' },
+  { day: 'Saturday',  time: '10:00 AM – 12:00 PM WAT', type: 'Office Hours', note: 'Optional 1-on-1 help' },
+  { day: 'Sunday',    time: 'Async',              type: 'Self-Study',        note: 'Recordings + exercises' },
+];
+
+const TECH_STACK = [
+  { name: 'HTML5',      bg: 'bg-orange-100',  text: 'text-orange-700',  border: 'border-orange-300',  abbr: 'HT' },
+  { name: 'CSS3',       bg: 'bg-blue-100',    text: 'text-blue-700',    border: 'border-blue-300',    abbr: 'CS' },
+  { name: 'JavaScript', bg: 'bg-yellow-100',  text: 'text-yellow-700',  border: 'border-yellow-300',  abbr: 'JS' },
+  { name: 'React',      bg: 'bg-cyan-100',    text: 'text-cyan-700',    border: 'border-cyan-300',    abbr: 'Re' },
+  { name: 'Next.js',    bg: 'bg-slate-100',   text: 'text-slate-700',   border: 'border-slate-300',   abbr: 'Nx' },
+  { name: 'Tailwind',   bg: 'bg-teal-100',    text: 'text-teal-700',    border: 'border-teal-300',    abbr: 'Tw' },
+  { name: 'Node.js',    bg: 'bg-green-100',   text: 'text-green-700',   border: 'border-green-300',   abbr: 'No' },
+  { name: 'PostgreSQL', bg: 'bg-indigo-100',  text: 'text-indigo-700',  border: 'border-indigo-300',  abbr: 'PG' },
+  { name: 'Git',        bg: 'bg-red-100',     text: 'text-red-700',     border: 'border-red-300',     abbr: 'Gi' },
+  { name: 'VS Code',    bg: 'bg-blue-100',    text: 'text-blue-700',    border: 'border-blue-300',    abbr: 'VS' },
+  { name: 'Vercel',     bg: 'bg-slate-100',   text: 'text-slate-700',   border: 'border-slate-300',   abbr: 'Ve' },
+  { name: 'Claude AI',  bg: 'bg-brand-50',    text: 'text-brand-700',   border: 'border-brand-300',   abbr: 'AI' },
+];
+
+const OUTCOMES = [
+  {
+    icon: '💼',
+    title: 'Junior Developer',
+    desc: 'Land a junior front-end or full-stack role at a local tech company or startup. Average junior salaries in Cameroon range from 150k–400k XAF/month.',
+    tags: ['Job-ready portfolio', 'GitHub profile', 'Interview prep'],
+  },
+  {
+    icon: '🌍',
+    title: 'Freelance Developer',
+    desc: 'Take on client projects from Upwork, LinkedIn, or your own network. Build websites, dashboards, and MVPs for $500–$3,000+ per project.',
+    tags: ['3 portfolio projects', 'Client skills', 'Remote-ready'],
+  },
+  {
+    icon: '🚀',
+    title: 'Build Your Own Product',
+    desc: 'Have a startup idea? You will have every technical skill needed to build it yourself — from the database to the deployed app.',
+    tags: ['Full-stack skills', 'AI tools', 'Capstone project'],
   },
 ];
 
@@ -189,6 +235,18 @@ export default function BootcampPage() {
   const formRef  = useRef<HTMLDivElement>(null);
   const { d, h, m, s, started } = useCountdown(START_DATE);
 
+  // Live seat counter
+  const [seats, setSeats] = useState<{ applied: number; total: number; remaining: number } | null>(null);
+  useEffect(() => {
+    fetch(`${API_URL}/bootcamp/stats`)
+      .then(r => r.json())
+      .then(setSeats)
+      .catch(() => null);
+  }, []);
+
+  // Application close countdown
+  const appClosed = APP_CLOSE_DATE.getTime() < Date.now();
+
   const [form, setForm] = useState<FormData>({
     fullName: '', email: '', phone: '', country: '',
     background: '', goal: '', paymentPlan: 'full',
@@ -222,7 +280,7 @@ export default function BootcampPage() {
     if (Object.keys(e).length > 0) { setErrors(e); return; }
     setSubmitting(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bootcamp/apply`, {
+      const res = await fetch(`${API_URL}/bootcamp/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -244,6 +302,8 @@ export default function BootcampPage() {
       }
       if (!res.ok) throw new Error((data as { error?: string }).error ?? 'Submission failed');
       setSubmitted(true);
+      // Refresh seat count
+      fetch(`${API_URL}/bootcamp/stats`).then(r => r.json()).then(setSeats).catch(() => null);
     } catch {
       setErrors({ consent: 'Submission failed — WhatsApp us at +237 690 07 505 or email bootcamp@digostechnologies.com.' });
     } finally {
@@ -260,8 +320,27 @@ export default function BootcampPage() {
   return (
     <div className="min-h-screen bg-white font-sans">
 
+      {/* ── Announcement banner ─────────────────────────────────────────────── */}
+      <div className="relative z-50 bg-brand-600 py-2.5 text-center text-xs font-bold text-white">
+        {appClosed ? (
+          <span>Applications for this cohort are now closed. Join the waitlist for the next cohort.</span>
+        ) : (
+          <span>
+            Applications close <strong>Aug 25</strong>
+            {seats !== null && seats.remaining > 0 && (
+              <> &nbsp;&middot;&nbsp; <strong className="text-brand-100">{seats.remaining} seat{seats.remaining !== 1 ? 's' : ''} remaining</strong></>
+            )}
+            {seats !== null && seats.remaining === 0 && (
+              <> &nbsp;&middot;&nbsp; <strong className="text-red-200">Cohort is full — join waitlist</strong></>
+            )}
+            &nbsp;&middot;&nbsp;
+            <button onClick={scrollToForm} className="underline underline-offset-2 opacity-90 hover:opacity-100">Apply now</button>
+          </span>
+        )}
+      </div>
+
       {/* ── Sticky nav ─────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/95 backdrop-blur-sm">
+      <nav className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-brand-950 bg-brand-600 shadow-[2px_2px_0_#333333]">
@@ -272,6 +351,7 @@ export default function BootcampPage() {
           </Link>
           <div className="hidden items-center gap-6 text-sm font-semibold text-slate-500 sm:flex">
             <a href="#curriculum" className="transition hover:text-brand-600">Curriculum</a>
+            <a href="#instructor" className="transition hover:text-brand-600">Instructor</a>
             <a href="#pricing" className="transition hover:text-brand-600">Pricing</a>
             <a href="#faq" className="transition hover:text-brand-600">FAQ</a>
           </div>
@@ -342,9 +422,17 @@ export default function BootcampPage() {
             </a>
           </div>
 
-          {/* Social proof */}
+          {/* Social proof / seats */}
           <p className="mt-6 text-xs text-white/30">
-            Cohort limited to <strong className="text-white/60">20 students</strong> · Applications reviewed within 48 hrs
+            {seats !== null ? (
+              <>
+                <strong className="text-white/60">{seats.applied}</strong> of{' '}
+                <strong className="text-white/60">{seats.total}</strong> seats filled
+                {seats.remaining > 0 && <> · <strong className="text-brand-300">{seats.remaining} left</strong></>}
+              </>
+            ) : (
+              <>Cohort limited to <strong className="text-white/60">20 students</strong> · Applications reviewed within 48 hrs</>
+            )}
           </p>
         </div>
       </section>
@@ -368,8 +456,75 @@ export default function BootcampPage() {
         </div>
       </section>
 
+      {/* ── Instructor ─────────────────────────────────────────────────────── */}
+      <section id="instructor" className="py-16 sm:py-24">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6">
+          <div className="mb-10 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-600">Your Instructor</p>
+            <h2 className="mt-2 text-3xl font-black text-slate-900">Learn from a working developer</h2>
+          </div>
+          <div className="overflow-hidden rounded-2xl border-2 border-brand-950 bg-white" style={{ boxShadow: '6px 6px 0 #333333' }}>
+            <div className="grid gap-0 sm:grid-cols-[280px_1fr]">
+              {/* Photo / avatar */}
+              <div className="flex flex-col items-center justify-center gap-4 border-b-2 border-brand-950 bg-brand-50 px-8 py-10 sm:border-b-0 sm:border-r-2">
+                <div className="flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-brand-950 bg-brand-600 shadow-[4px_4px_0_#333333]">
+                  <span className="text-4xl font-black text-white">DT</span>
+                </div>
+                <div className="text-center">
+                  <p className="text-base font-black text-slate-900">Instructor</p>
+                  <p className="text-sm text-brand-600 font-semibold">Digos Technologies</p>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href="https://wa.me/23769007505"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg border-2 border-brand-950 bg-green-500 px-3 py-1.5 text-[11px] font-black text-white shadow-[2px_2px_0_#333333]"
+                  >
+                    WhatsApp
+                  </a>
+                  <a
+                    href="mailto:bootcamp@digostechnologies.com"
+                    className="rounded-lg border-2 border-brand-950 bg-white px-3 py-1.5 text-[11px] font-black text-slate-900 shadow-[2px_2px_0_#333333]"
+                  >
+                    Email
+                  </a>
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div className="px-8 py-8">
+                <div className="mb-5 flex flex-wrap gap-2">
+                  {['Full-Stack Developer', '5+ Years Experience', 'React & Next.js', 'Node.js & PostgreSQL'].map(tag => (
+                    <span key={tag} className="rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700">{tag}</span>
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed text-slate-600">
+                  Our lead instructor has spent over five years building production web applications for clients across Africa and beyond. With deep expertise in the modern JavaScript ecosystem — React, Next.js, Node.js, and PostgreSQL — they have shipped real products used by thousands of people.
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                  Teaching philosophy: no hand-holding, no shortcuts. You will understand <em>why</em> every line of code works, not just copy-paste it. Every concept is grounded in real-world use cases because that is what makes developers hire-ready.
+                </p>
+                <div className="mt-6 grid grid-cols-3 gap-4 border-t border-slate-100 pt-5">
+                  {[
+                    { value: '5+', label: 'Years shipping code' },
+                    { value: '30+', label: 'Projects delivered' },
+                    { value: '100%', label: 'Practitioner-taught' },
+                  ].map(({ value, label }) => (
+                    <div key={label}>
+                      <p className="text-xl font-black text-brand-600">{value}</p>
+                      <p className="text-[11px] text-slate-500">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── What you'll build ───────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24">
+      <section className="bg-slate-50 py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-5 sm:px-6">
           <div className="mb-10 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-brand-600">Projects</p>
@@ -399,7 +554,7 @@ export default function BootcampPage() {
       </section>
 
       {/* ── Curriculum ─────────────────────────────────────────────────────── */}
-      <section id="curriculum" className="bg-slate-50 py-16 sm:py-24">
+      <section id="curriculum" className="py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-5 sm:px-6">
           <div className="mb-10 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-brand-600">9-Week Curriculum</p>
@@ -426,8 +581,73 @@ export default function BootcampPage() {
         </div>
       </section>
 
-      {/* ── Who this is for ────────────────────────────────────────────────── */}
+      {/* ── Daily schedule ─────────────────────────────────────────────────── */}
+      <section className="bg-slate-50 py-16 sm:py-24">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6">
+          <div className="mb-10 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-600">Weekly Schedule</p>
+            <h2 className="mt-2 text-3xl font-black text-slate-900">What your week looks like</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-slate-500">
+              Structured enough to make progress. Flexible enough to keep your life.
+            </p>
+          </div>
+          <div className="overflow-hidden rounded-2xl border-2 border-brand-950 bg-white" style={{ boxShadow: '5px 5px 0 #333333' }}>
+            {SCHEDULE.map((row, i) => (
+              <div
+                key={row.day}
+                className={`grid grid-cols-[100px_1fr_auto] items-center gap-4 px-5 py-4 sm:grid-cols-[140px_1fr_120px_auto] ${i < SCHEDULE.length - 1 ? 'border-b border-slate-100' : ''}`}
+              >
+                <p className="text-sm font-extrabold text-slate-900">{row.day}</p>
+                <p className="hidden text-sm text-slate-500 sm:block">{row.time}</p>
+                <span className={`hidden rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-widest sm:inline-block ${
+                  row.type === 'Live Session'  ? 'bg-brand-100 text-brand-700' :
+                  row.type === 'Office Hours' ? 'bg-green-100 text-green-700' :
+                                                'bg-slate-100 text-slate-600'
+                }`}>{row.type}</span>
+                <p className="text-xs text-slate-400">{row.note}</p>
+                {/* Mobile time */}
+                <p className="text-xs text-slate-400 sm:hidden col-start-2">{row.time}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-center text-xs text-slate-400">All times in West Africa Time (WAT, UTC+1). Sessions recorded and available within 24 hrs.</p>
+        </div>
+      </section>
+
+      {/* ── Tech stack ─────────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-24">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6">
+          <div className="mb-10 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-600">Tools & Technologies</p>
+            <h2 className="mt-2 text-3xl font-black text-slate-900">The modern stack you&apos;ll master</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-slate-500">
+              Every tool here is used in real companies today. You will graduate with a stack that is employer-ready.
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3">
+            {TECH_STACK.map(({ name, bg, text, border, abbr }) => (
+              <div
+                key={name}
+                className={`flex items-center gap-2.5 rounded-2xl border-2 ${border} ${bg} px-4 py-2.5`}
+                style={{ boxShadow: '3px 3px 0 #33333318' }}
+              >
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-current/20 bg-white/60 text-[10px] font-black ${text}`}>
+                  {abbr}
+                </div>
+                <span className={`text-sm font-bold ${text}`}>{name}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 rounded-2xl border-2 border-brand-200 bg-brand-50 px-5 py-4 text-center">
+            <p className="text-sm text-brand-800">
+              <strong>Including AI tools:</strong> you will learn to code alongside Claude AI, GitHub Copilot, and Cursor — the tools that make modern developers 2–3× more productive.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Who this is for ────────────────────────────────────────────────── */}
+      <section className="bg-slate-50 py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-5 sm:px-6">
           <div className="mb-10 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-brand-600">Who should apply</p>
@@ -446,6 +666,33 @@ export default function BootcampPage() {
           </div>
           <div className="mt-8 rounded-2xl border-2 border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
             <strong>Not for you if:</strong> you&apos;re looking for a passive course to watch at your own pace with no accountability. This is an active, live, high-intensity programme.
+          </div>
+        </div>
+      </section>
+
+      {/* ── Career outcomes ─────────────────────────────────────────────────── */}
+      <section className="py-16 sm:py-24">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6">
+          <div className="mb-10 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-600">After Graduation</p>
+            <h2 className="mt-2 text-3xl font-black text-slate-900">Three paths out of Demo Day</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-slate-500">
+              Every graduate leaves with a production-deployed project, a live portfolio, and the skills for one of these three tracks.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-3">
+            {OUTCOMES.map((o) => (
+              <div key={o.title} className="rounded-2xl border-2 border-brand-950 bg-white p-6" style={{ boxShadow: '5px 5px 0 #333333' }}>
+                <span className="text-4xl">{o.icon}</span>
+                <h3 className="mt-3 text-lg font-extrabold text-slate-900">{o.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">{o.desc}</p>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {o.tags.map(t => (
+                    <span key={t} className="rounded-full border border-brand-200 bg-brand-50 px-2.5 py-1 text-[10px] font-bold text-brand-700">{t}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -513,6 +760,21 @@ export default function BootcampPage() {
               Payment instructions are sent by email after your application is accepted. Spot is reserved only after payment confirmation.
             </p>
           </div>
+
+          {/* Refund policy callout */}
+          <div className="mt-6 rounded-2xl border-2 border-amber-400/40 bg-amber-500/10 px-5 py-5">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 text-xl">🔒</span>
+              <div>
+                <p className="text-sm font-extrabold text-amber-300">Refund Policy — No risk to apply</p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-200/70">
+                  <strong className="text-amber-200">Full refund</strong> if you withdraw before September 5 &nbsp;·&nbsp;
+                  <strong className="text-amber-200">50% refund</strong> between September 6–12 &nbsp;·&nbsp;
+                  <strong className="text-amber-200">No refund</strong> after September 12, but you keep lifetime access to all recordings and materials.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -541,7 +803,14 @@ export default function BootcampPage() {
           <div className="mb-8 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-brand-600">Apply now</p>
             <h2 className="mt-2 text-3xl font-black text-slate-900">Reserve your seat</h2>
-            <p className="mt-2 text-sm text-slate-500">Takes 2 minutes. Cohort limited to 20 students.</p>
+            <p className="mt-2 text-sm text-slate-500">
+              Takes 2 minutes. Cohort limited to{' '}
+              {seats !== null ? (
+                <strong>{seats.remaining > 0 ? `${seats.remaining} seats remaining` : 'no seats — join waitlist'}</strong>
+              ) : (
+                '20 students'
+              )}.
+            </p>
           </div>
 
           {submitted ? (

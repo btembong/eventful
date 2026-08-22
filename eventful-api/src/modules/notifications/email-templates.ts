@@ -350,6 +350,43 @@ export function tplBootcampWelcome(opts: {
   );
 }
 
+/** Bootcamp accepted — payment instructions */
+export function tplBootcampAccepted(opts: {
+  fullName:      string;
+  paymentPlan:   'FULL' | 'INSTALLMENT';
+  paymentMethod: string;
+}): string {
+  const amountDue = opts.paymentPlan === 'FULL' ? '$250' : '$135';
+  const planLabel = opts.paymentPlan === 'FULL' ? 'Full payment — $250' : 'First instalment — $135 (second due Sep 16)';
+  const payInstructions: Record<string, string> = {
+    'MTN Mobile Money':              'Send to <strong>+237 690 07 505</strong> (Digos Technologies). Use your full name as reference.',
+    'Orange Money':                  'Send to <strong>+237 690 07 505</strong> (Digos Technologies). Use your full name as reference.',
+    'Credit / Debit Card (Stripe)':  'You will receive a secure Stripe payment link within 24 hours.',
+    'PayPal':                        'Send to <strong>bootcamp@digostechnologies.com</strong> via PayPal Goods & Services. Include your full name in the note.',
+  };
+  const payDetail = payInstructions[opts.paymentMethod] ?? 'Payment instructions will follow in a separate message.';
+  return shell(
+    greeting(opts.fullName) +
+    label('Bootcamp · Application Accepted') +
+    h1('Congratulations — you\'re in!') +
+    p('Your application to the <strong>Intensive Web Development Bootcamp</strong> (Sep 2 – Oct 30, 2026) has been <strong>accepted</strong>. To lock in your seat, please complete payment within <strong>48 hours</strong>.') +
+    `<table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:collapse;">
+      <tr><td style="padding:12px 0;border-bottom:1px solid ${BORDER};font-size:14px;color:${MUTED};">Plan</td><td style="padding:12px 0;border-bottom:1px solid ${BORDER};font-size:14px;font-weight:700;color:${TEXT};text-align:right;">${planLabel}</td></tr>
+      <tr><td style="padding:12px 0;border-bottom:1px solid ${BORDER};font-size:14px;color:${MUTED};">Amount due now</td><td style="padding:12px 0;border-bottom:1px solid ${BORDER};font-size:20px;font-weight:900;color:${ORANGE};text-align:right;">${amountDue}</td></tr>
+      <tr><td style="padding:12px 0;font-size:14px;color:${MUTED};">Method</td><td style="padding:12px 0;font-size:14px;font-weight:600;color:${TEXT};text-align:right;">${opts.paymentMethod}</td></tr>
+    </table>` +
+    `<div style="background:#FFF7ED;border:2px solid #F07200;border-radius:12px;padding:16px 20px;margin:20px 0;">
+      <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${ORANGE};">Payment instructions</p>
+      <p style="margin:0;font-size:14px;line-height:1.6;color:${TEXT};">${payDetail}</p>
+    </div>` +
+    p('Once we confirm your payment, you\'ll receive your onboarding kit and Discord/WhatsApp group invite before September 2.') +
+    divider() +
+    p('Questions? Reply to this email or WhatsApp: <a href="https://wa.me/23769007505" style="color:${ORANGE};font-weight:600;">+237 690 07 505</a>') +
+    pSmall('If you cannot pay within 48 hours, please reply to this email to arrange an extension. Unpaid seats are released after 48 hours.') +
+    pSmall('Digos Technologies · bootcamp@digostechnologies.com')
+  );
+}
+
 /** Password reset link — expires in 15 minutes */
 export function tplPasswordReset(opts: { fullName: string; resetUrl: string }): string {
   return shell(

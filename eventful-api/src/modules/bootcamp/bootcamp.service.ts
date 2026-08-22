@@ -67,9 +67,37 @@ export const bootcampService = {
   },
 
   async updateStatus(id: string, status: string, adminNotes?: string) {
-    return prisma.bootcampApplication.update({
+    const updated = await prisma.bootcampApplication.update({
       where: { id },
       data:  { status: status as never, adminNotes },
     });
+
+    // Fire acceptance email when admin moves to ACCEPTED
+    if (status === 'ACCEPTED') {
+      const { tplBootcampAccepted } = await import('@/modules/notifications/email-templates');
+      notificationsService.sendEmail(
+        updated.email,
+        'You\'re accepted! Here\'s how to secure your seat',
+        tplBootcampAccepted({
+          fullName:      updated.fullName,
+          paymentPlan:   updated.paymentPlan,
+          paymentMethod: updated.paymentMethod,
+        }),
+      ).catch(err => console.error('[bootcamp] Acceptance email failed:', err.message));
+    }
+
+    return updated;
+  },
+
+  async getStats(cohort = '2026-09') {
+    const TOTAL = 20;
+    const applied = await prisma.bootcampApplication.count({
+      where: { cohort, status: { not: 'REJECTED' } },
+    });
+    return { applied, total: TOTAL, remaining: Math.max(0, TOTAL - applied) };
+  },
+
+  async getApplication(id: string) {
+    return prisma.bootcampApplication.findUnique({ where: { id } });
   },
 };
