@@ -418,17 +418,20 @@ export default async function EventPage({ params }: Props) {
             by <span className="font-semibold text-white/70">{event.creator.fullName}</span>
           </p>
 
-          {/* Meta pills */}
-          <div className="mt-6 flex flex-wrap gap-2.5">
+          {/* Meta info blocks — 2×2 grid, bigger icons + text */}
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { Icon: CalendarIcon,   text: fmtDateShort(event.startsAt) },
-              { Icon: ClockIcon,      text: timeStr },
-              { Icon: MapPointIcon,   text: event.country ? `${event.venue}, ${event.country}` : event.venue },
-              { Icon: UsersGroupIcon, text: `${event.capacity.toLocaleString()} capacity` },
-            ].map(({ Icon, text }) => (
-              <div key={text} className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/80 backdrop-blur-sm">
-                <Icon className="h-3.5 w-3.5 shrink-0 text-brand-400" />
-                {text}
+              { Icon: CalendarIcon,   label: 'Date',     text: fmtDateShort(event.startsAt) },
+              { Icon: ClockIcon,      label: 'Time',     text: timeStr },
+              { Icon: MapPointIcon,   label: 'Venue',    text: event.country ? `${event.venue}, ${event.country}` : event.venue },
+              { Icon: UsersGroupIcon, label: 'Capacity', text: `${event.capacity.toLocaleString()} people` },
+            ].map(({ Icon, label, text }) => (
+              <div key={label} className="flex flex-col gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <Icon className="h-5 w-5 shrink-0 text-brand-400" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">{label}</span>
+                </div>
+                <p className="text-sm font-bold leading-snug text-white">{text}</p>
               </div>
             ))}
           </div>
