@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { StarIcon, TrendUpIcon, CheckCircleIcon } from '@/components/icons';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -84,17 +85,17 @@ const FOR_WHO = [
   {
     title: 'Complete Beginners',
     desc: 'Never written a line of code? Perfect. We start from zero and take you to job-ready.',
-    icon: '🌱',
+    Icon: StarIcon,
   },
   {
     title: 'Career Switchers',
     desc: 'Ready to leave your current field? 9 focused weeks is all it takes to pivot into tech.',
-    icon: '🔄',
+    Icon: TrendUpIcon,
   },
   {
     title: 'Self-Taught Devs',
     desc: 'Have some basics but lack structure? Fill the gaps and build real projects with guidance.',
-    icon: '📚',
+    Icon: CheckCircleIcon,
   },
 ];
 
@@ -433,10 +434,10 @@ export default function BootcampPage() {
             <h2 className="mt-2 text-3xl font-black text-slate-900">This bootcamp is for you if…</h2>
           </div>
           <div className="grid gap-5 sm:grid-cols-3">
-            {FOR_WHO.map(({ title, desc, icon }) => (
+            {FOR_WHO.map(({ title, desc, Icon }) => (
               <div key={title} className="rounded-2xl border-2 border-slate-200 bg-white p-6 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-brand-950 bg-brand-50 text-2xl shadow-[3px_3px_0_#333333]">
-                  {icon}
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-brand-950 bg-brand-50 shadow-[3px_3px_0_#333333]">
+                  <Icon className="h-7 w-7 text-brand-600" />
                 </div>
                 <h3 className="font-extrabold text-slate-900">{title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-500">{desc}</p>
