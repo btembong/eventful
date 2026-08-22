@@ -15,7 +15,8 @@ interface EventRow {
   venue: string;
   startsAt: string;
   category: string;
-  price: string;
+  minPrice: number;
+  isFree: boolean;
   currency: string;
   capacity: number;
   ticketsSold: number;
@@ -66,8 +67,8 @@ function EventCard({ ev }: { ev: EventRow }) {
   const cap      = ev.capacity ?? 0;
   const pct      = cap > 0 ? Math.min(100, Math.round((sold / cap) * 100)) : 0;
   const barColor = pct >= 90 ? 'bg-amber-500' : pct >= 60 ? 'bg-brand-500' : 'bg-emerald-500';
-  const isFree   = Number(ev.price) === 0;
-  const revenue  = isFree ? 'Free' : `${ev.currency} ${(Number(ev.price) * sold).toLocaleString()}`;
+  const isFree   = ev.isFree ?? (ev.minPrice === 0);
+  const priceLabel = isFree ? 'Free' : `from ${ev.currency} ${(ev.minPrice ?? 0).toLocaleString()}`;
 
   return (
     <div className="flex gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition hover:border-slate-200 hover:shadow-md">
@@ -100,7 +101,7 @@ function EventCard({ ev }: { ev: EventRow }) {
             </p>
             <p className="mt-0.5 text-xs text-slate-400">{fmtDate(ev.startsAt)}</p>
           </div>
-          <p className="shrink-0 text-sm font-extrabold text-slate-800">{revenue}</p>
+          <p className="shrink-0 text-sm font-extrabold text-slate-800">{priceLabel}</p>
         </div>
 
         {/* Sales progress */}

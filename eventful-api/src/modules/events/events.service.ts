@@ -354,16 +354,29 @@ export const eventsService = {
   },
 
   async getCreatorEvents(creatorId: string, page = 1, limit = 20) {
-    const [events, total] = await Promise.all([
+    const [rawEvents, total] = await Promise.all([
       prisma.event.findMany({
         where: { creatorId, deletedAt: null },
         orderBy: { startsAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
-        include: { _count: { select: { tickets: true } } },
+        include: {
+          _count: { select: { tickets: { where: { status: { in: ['PAID', 'CHECKED_IN'] } } } } },
+          tiers: { select: { type: true, price: true, currency: true } },
+        },
       }),
       prisma.event.count({ where: { creatorId, deletedAt: null } }),
     ]);
+
+    const events = rawEvents.map(({ tiers, ...ev }) => {
+      const paidTiers = tiers.filter((t) => t.type !== 'FREE' && t.type !== 'INVITE_ONLY');
+      const hasFree   = tiers.some((t) => t.type === 'FREE');
+      const minPrice  = paidTiers.length > 0
+        ? Math.min(...paidTiers.map((t) => Number(t.price)))
+        : 0;
+      return { ...ev, minPrice, isFree: paidTiers.length === 0 || hasFree };
+    });
+
     return { events, total, page, limit, pages: Math.ceil(total / limit) };
   },
 
