@@ -2,7 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { StarIcon, TrendUpIcon, CheckCircleIcon } from '@/components/icons';
+import {
+  StarIcon, TrendUpIcon, CheckCircleIcon,
+  ShieldCheckIcon, WalletIcon, ChartIcon, SettingsIcon,
+  MailIcon, BuildingsIcon, UserCircleIcon,
+} from '@/components/icons';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -106,32 +110,32 @@ const TECH_TIERS = ['Frontend', 'Backend', 'Payments', 'DevOps'] as const;
 const ADVANCED_BACKEND = [
   {
     category: 'API Design',
-    icon: '🔌',
+    Icon: BuildingsIcon,
     skills: ['RESTful route design & versioning', 'Request validation with Zod', 'Rate limiting & throttling', 'Pagination, filtering & sorting', 'Error handling middleware'],
   },
   {
     category: 'Auth & Security',
-    icon: '🔒',
+    Icon: ShieldCheckIcon,
     skills: ['JWT access + refresh token rotation', 'Password hashing with bcrypt', 'Role-based access control (RBAC)', 'CORS, Helmet & XSS prevention', 'Audit logging for sensitive actions'],
   },
   {
     category: 'Performance',
-    icon: '⚡',
+    Icon: ChartIcon,
     skills: ['Redis caching layer (TTL strategies)', 'Background job queues with BullMQ', 'Database indexing & query optimization', 'Connection pooling with Prisma', 'Lazy loading & code splitting'],
   },
   {
     category: 'Payment Engineering',
-    icon: '💳',
+    Icon: WalletIcon,
     skills: ['Stripe checkout & webhook verification', 'Mobile Money (MTN, Orange) API flows', 'Idempotency keys & duplicate prevention', 'Payment state machine design', 'Refund & dispute handling'],
   },
   {
     category: 'DevOps & CI/CD',
-    icon: '🚀',
+    Icon: SettingsIcon,
     skills: ['Docker containers & docker-compose', 'Environment management (.env, secrets)', 'Render & Vercel deployment pipelines', 'Health checks & graceful shutdown', 'Logging & error monitoring (Sentry)'],
   },
   {
     category: 'Data & Emails',
-    icon: '📦',
+    Icon: MailIcon,
     skills: ['Relational schema design with Prisma', 'Database migrations & seeding', 'Transactional email via Brevo/Resend', 'File uploads to cloud storage (S3)', 'CSV export & data aggregation'],
   },
 ];
@@ -140,6 +144,8 @@ const PAYMENT_GATEWAYS = [
   {
     name: 'Stripe',
     region: 'Global',
+    logo: 'https://logo.clearbit.com/stripe.com',
+    logoBg: 'bg-violet-50',
     color: 'bg-violet-50 border-violet-200',
     badge: 'bg-violet-100 text-violet-700',
     what: ['Checkout Sessions', 'Payment Intents', 'Webhooks & event verification', 'Refunds & disputes', 'Subscription billing'],
@@ -147,6 +153,8 @@ const PAYMENT_GATEWAYS = [
   {
     name: 'MTN Mobile Money',
     region: 'West & Central Africa',
+    logo: 'https://logo.clearbit.com/mtn.com',
+    logoBg: 'bg-yellow-50',
     color: 'bg-yellow-50 border-yellow-200',
     badge: 'bg-yellow-100 text-yellow-700',
     what: ['Collection API (request to pay)', 'Disbursement API (payouts)', 'Sandbox testing environment', 'Webhook callbacks', 'Idempotency & retry logic'],
@@ -154,6 +162,8 @@ const PAYMENT_GATEWAYS = [
   {
     name: 'Orange Money',
     region: 'Central Africa',
+    logo: 'https://logo.clearbit.com/orange.com',
+    logoBg: 'bg-orange-50',
     color: 'bg-orange-50 border-orange-200',
     badge: 'bg-orange-100 text-orange-700',
     what: ['Payment initiation API', 'Status polling & webhooks', 'Merchant portal integration', 'Token-based auth flow', 'Error handling & fallbacks'],
@@ -161,6 +171,8 @@ const PAYMENT_GATEWAYS = [
   {
     name: 'PayPal',
     region: 'Global',
+    logo: 'https://logo.clearbit.com/paypal.com',
+    logoBg: 'bg-blue-50',
     color: 'bg-blue-50 border-blue-200',
     badge: 'bg-blue-100 text-blue-700',
     what: ['Orders API (v2)', 'Smart Payment Buttons', 'Webhook verification', 'Refund automation', 'Sandbox & live environments'],
@@ -169,19 +181,25 @@ const PAYMENT_GATEWAYS = [
 
 const OUTCOMES = [
   {
-    icon: '💼',
+    Icon: UserCircleIcon,
+    iconBg: 'bg-blue-50 border-blue-200',
+    iconColor: 'text-blue-600',
     title: 'Junior Developer',
     desc: 'Land a junior front-end or full-stack role at a local tech company or startup. Average junior salaries in Cameroon range from 150k–400k XAF/month.',
     tags: ['Job-ready portfolio', 'GitHub profile', 'Interview prep'],
   },
   {
-    icon: '🌍',
+    Icon: TrendUpIcon,
+    iconBg: 'bg-green-50 border-green-200',
+    iconColor: 'text-green-600',
     title: 'Freelance Developer',
     desc: 'Take on client projects from Upwork, LinkedIn, or your own network. Build websites, dashboards, and MVPs for $500–$3,000+ per project.',
     tags: ['3 portfolio projects', 'Client skills', 'Remote-ready'],
   },
   {
-    icon: '🚀',
+    Icon: StarIcon,
+    iconBg: 'bg-brand-50 border-brand-200',
+    iconColor: 'text-brand-600',
     title: 'Build Your Own Product',
     desc: 'Have a startup idea? You will have every technical skill needed to build it yourself — from the database to the deployed app.',
     tags: ['Full-stack skills', 'AI tools', 'Capstone project'],
@@ -752,7 +770,9 @@ export default function BootcampPage() {
             {ADVANCED_BACKEND.map((block) => (
               <div key={block.category} className="rounded-2xl border border-white/10 bg-white/5 p-5 hover:bg-white/[0.08] transition">
                 <div className="mb-3 flex items-center gap-2.5">
-                  <span className="text-xl">{block.icon}</span>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10">
+                    <block.Icon className="h-4 w-4 text-brand-300" />
+                  </div>
                   <p className="text-sm font-extrabold text-white">{block.category}</p>
                 </div>
                 <ul className="space-y-1.5">
@@ -782,8 +802,18 @@ export default function BootcampPage() {
           <div className="grid gap-5 sm:grid-cols-2">
             {PAYMENT_GATEWAYS.map((gw) => (
               <div key={gw.name} className={`rounded-2xl border-2 ${gw.color} bg-white p-6`} style={{ boxShadow: '4px 4px 0 #33333318' }}>
-                <div className="mb-4 flex items-start justify-between gap-2">
-                  <h3 className="text-base font-extrabold text-slate-900">{gw.name}</h3>
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 ${gw.logoBg} p-1.5`}>
+                      <img
+                        src={gw.logo}
+                        alt={gw.name}
+                        className="h-full w-full object-contain"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
+                    <h3 className="text-base font-extrabold text-slate-900">{gw.name}</h3>
+                  </div>
                   <span className={`shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-black ${gw.badge}`}>{gw.region}</span>
                 </div>
                 <ul className="space-y-1.5">
@@ -851,7 +881,9 @@ export default function BootcampPage() {
           <div className="grid gap-5 sm:grid-cols-3">
             {OUTCOMES.map((o) => (
               <div key={o.title} className="rounded-2xl border-2 border-brand-950 bg-white p-6" style={{ boxShadow: '5px 5px 0 #333333' }}>
-                <span className="text-4xl">{o.icon}</span>
+                <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border-2 ${o.iconBg} shadow-[2px_2px_0_#33333320]`}>
+                  <o.Icon className={`h-6 w-6 ${o.iconColor}`} />
+                </div>
                 <h3 className="mt-3 text-lg font-extrabold text-slate-900">{o.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-500">{o.desc}</p>
                 <div className="mt-4 flex flex-wrap gap-1.5">
