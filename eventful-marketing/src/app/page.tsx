@@ -190,10 +190,22 @@ export default async function HomePage() {
             </div>
 
             {/* Right — ticket visual */}
-            <div className="flex items-center justify-center py-6 lg:py-16">
-              {/* Mobile: single featured ticket, full-width */}
-              <div className="relative w-full max-w-sm lg:hidden">
-                <div style={{ transform: 'rotate(-1.5deg)' }}>
+            <div className="flex items-center justify-center py-6 lg:py-10">
+              <div className="relative w-full">
+                {/* Back ticket — peeking behind, rotated */}
+                <div className="absolute inset-x-0 top-6 px-6 lg:px-4" style={{ transform: 'rotate(3deg)', opacity: 0.65 }}>
+                  <TicketCard
+                    eventName="Lagos Theater Night"
+                    category="Theater"
+                    venue="National Theater"
+                    date="Sep 5, 2026"
+                    time="6:30 PM"
+                    price="XAF 8,000"
+                    notchColor="bg-white"
+                  />
+                </div>
+                {/* Front ticket — full width, slight counter-tilt */}
+                <div className="relative z-10 animate-float" style={{ transform: 'rotate(-1.5deg)' }}>
                   <TicketCard
                     eventName="Afro Beats Summer Fest"
                     category="Concert"
@@ -205,46 +217,7 @@ export default async function HomePage() {
                   />
                 </div>
                 {/* Check-in badge */}
-                <div className="absolute -bottom-3 right-4 z-20 flex items-center gap-2 rounded-xl border border-brand-200 bg-white px-3 py-2 shadow-lg">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-600">
-                    <CheckCircleIcon className="h-3 w-3 text-white" />
-                  </span>
-                  <div>
-                    <p className="text-[10px] font-bold text-brand-600">Checked in</p>
-                    <p className="text-[9px] text-slate-400">QR verified • just now</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Desktop: stacked two-ticket layout */}
-              <div className="relative hidden lg:block" style={{ width: '480px', height: '440px' }}>
-                {/* Back ticket */}
-                <div className="absolute top-10 left-6" style={{ transform: 'rotate(4deg)', opacity: 0.75 }}>
-                  <TicketCard
-                    eventName="Lagos Theater Night"
-                    category="Theater"
-                    venue="National Theater"
-                    date="Sep 5, 2026"
-                    time="6:30 PM"
-                    price="XAF 8,000"
-                    notchColor="bg-white"
-                  />
-                </div>
-                {/* Front ticket */}
-                <div className="absolute top-0 left-0" style={{ transform: 'rotate(-2deg)' }}>
-                  <div className="animate-float">
-                    <TicketCard
-                      eventName="Afro Beats Summer Fest"
-                      category="Concert"
-                      venue="Grand Arena, Lagos"
-                      date="Aug 30, 2026"
-                      time="7:00 PM"
-                      price="XAF 15,000"
-                    />
-                  </div>
-                </div>
-                {/* Check-in badge */}
-                <div className="absolute -bottom-4 right-8 z-20 flex items-center gap-2.5 rounded-2xl border border-brand-200 bg-white px-4 py-2.5 shadow-lg">
+                <div className="absolute -bottom-4 right-6 z-20 flex items-center gap-2.5 rounded-2xl border-2 border-brand-200 bg-white px-4 py-2.5 shadow-[4px_4px_0_#333333]">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600">
                     <CheckCircleIcon className="h-4 w-4 text-white" />
                   </span>
