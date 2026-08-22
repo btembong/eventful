@@ -91,6 +91,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified]   = useState(false);
   const [notFound, setNotFound]   = useState(false);
+  const [isGuest, setIsGuest]     = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${id}`);
@@ -100,6 +101,10 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    setIsGuest(!localStorage.getItem('access_token'));
+  }, []);
 
   const handleVerify = async () => {
     setVerifying(true);
@@ -134,7 +139,6 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
   const isPending   = order.status === 'PENDING';
   const isCancelled = order.status === 'CANCELLED';
   const price       = Number(order.totalAmount);
-  const isGuest     = typeof window !== 'undefined' && !localStorage.getItem('access_token');
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4">
