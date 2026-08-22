@@ -575,7 +575,7 @@ export default function BootcampPage() {
                 </div>
                 <div className="text-center">
                   <p className="text-base font-black text-slate-900">Bejumeh Blaise Tembong</p>
-                  <p className="text-sm text-brand-600 font-semibold">Software · Backend · DevOps Engineer</p>
+                  <p className="text-sm text-brand-600 font-semibold">Full-Stack · Backend · DevOps Engineer</p>
                   <p className="mt-1 text-xs text-slate-400">Digos Technologies</p>
                 </div>
                 <div className="flex gap-2">
@@ -599,7 +599,7 @@ export default function BootcampPage() {
               {/* Bio */}
               <div className="px-8 py-8">
                 <div className="mb-5 flex flex-wrap gap-2">
-                  {['Software Engineer', 'Backend Engineering', 'DevOps & Infrastructure', 'Production Systems', 'API Design', 'Cloud Deployment'].map(tag => (
+                  {['Full-Stack Engineer', 'Backend Engineering', 'DevOps & Infrastructure', 'Production Systems', 'API Design', 'Cloud Deployment'].map(tag => (
                     <span key={tag} className="rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700">{tag}</span>
                   ))}
                 </div>
