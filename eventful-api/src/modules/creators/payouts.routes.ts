@@ -3,6 +3,21 @@ import { requireCreator, requireRole } from '@/middleware/auth.guard';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
+// ── KYC guard helper ──────────────────────────────────────────────────────────
+async function requireKyc(req: any, reply: any) {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.id },
+    select: { kycStatus: true },
+  });
+  if (!user || user.kycStatus !== 'APPROVED') {
+    return reply.status(403).send({
+      error: 'KYC_REQUIRED',
+      message: 'Complete identity verification before accessing payouts.',
+      kycStatus: user?.kycStatus ?? 'PENDING',
+    });
+  }
+}
+
 export default async function payoutsRoutes(app: FastifyInstance) {
 
   // GET /creators/me/payouts — creator sees their payout history
@@ -19,7 +34,7 @@ export default async function payoutsRoutes(app: FastifyInstance) {
         },
       },
     },
-    preHandler: requireCreator,
+    preHandler: [requireCreator, requireKyc],
   }, async (req) => {
     const { page = 1, limit = 20 } = req.query as { page?: number; limit?: number };
     const [payouts, total] = await Promise.all([

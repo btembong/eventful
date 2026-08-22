@@ -8,7 +8,7 @@ import {
   TicketIcon, CalendarIcon, ChartIcon, SettingsIcon,
   QrCodeIcon, UsersGroupIcon, MenuIcon, XIcon,
   PowerIcon, HomeIcon, BellIcon, TagPriceIcon, MailIcon,
-  CheckCircleIcon,
+  CheckCircleIcon, ShieldCheckIcon,
 } from '@/components/icons';
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
@@ -29,12 +29,13 @@ const ATTENDEE_NAV: NavItem[] = [
 ];
 
 const CREATOR_NAV: NavItem[] = [
-  { href: '/dashboard/creator',              label: 'Overview',   shortLabel: 'Overview',   Icon: ChartIcon,       exact: true },
-  { href: '/dashboard/creator/events',       label: 'My Events',  shortLabel: 'Events',     Icon: CalendarIcon },
-  { href: '/dashboard/creator/discounts',    label: 'Discounts',  shortLabel: 'Discounts',  Icon: TagPriceIcon },
-  { href: '/dashboard/creator/marketing',    label: 'Marketing',  shortLabel: 'Marketing',  Icon: MailIcon },
-  { href: '/dashboard/creator/support',      label: 'Support',    shortLabel: 'Support',    Icon: CheckCircleIcon },
-  { href: '/dashboard/creator/settings',     label: 'Settings',   shortLabel: 'Settings',   Icon: SettingsIcon },
+  { href: '/dashboard/creator',              label: 'Overview',       shortLabel: 'Overview',   Icon: ChartIcon,        exact: true },
+  { href: '/dashboard/creator/events',       label: 'My Events',      shortLabel: 'Events',     Icon: CalendarIcon },
+  { href: '/dashboard/creator/discounts',    label: 'Discounts',      shortLabel: 'Discounts',  Icon: TagPriceIcon },
+  { href: '/dashboard/creator/marketing',    label: 'Marketing',      shortLabel: 'Marketing',  Icon: MailIcon },
+  { href: '/dashboard/creator/kyc',          label: 'Identity & KYC', shortLabel: 'KYC',        Icon: ShieldCheckIcon },
+  { href: '/dashboard/creator/support',      label: 'Support',        shortLabel: 'Support',    Icon: CheckCircleIcon },
+  { href: '/dashboard/creator/settings',     label: 'Settings',       shortLabel: 'Settings',   Icon: SettingsIcon },
 ];
 
 const STAFF_NAV: NavItem[] = [
@@ -166,7 +167,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
-                  <item.Icon className={`h-4 w-4 shrink-0 ${active ? 'text-brand-500' : 'text-slate-400'}`} />
+                  <item.Icon className={`h-5 w-5 shrink-0 ${active ? 'text-brand-500' : 'text-slate-400'}`} />
                   {item.label}
                   {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-brand-500" />}
                 </Link>
@@ -196,7 +197,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           onClick={() => logout()}
           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-500 transition hover:bg-red-50 hover:text-red-600"
         >
-          <PowerIcon className="h-4 w-4 shrink-0" />
+          <PowerIcon className="h-5 w-5 shrink-0" />
           Sign out
         </button>
 
@@ -210,7 +211,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
               : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
           }`}
         >
-          <TicketIcon className={`h-4 w-4 shrink-0 ${pathname === '/dashboard/my-tickets' ? 'text-brand-500' : 'text-slate-400'}`} />
+          <TicketIcon className={`h-5 w-5 shrink-0 ${pathname === '/dashboard/my-tickets' ? 'text-brand-500' : 'text-slate-400'}`} />
           My Tickets
         </Link>
       </div>
@@ -246,7 +247,7 @@ function BottomTabBar() {
                 active ? 'text-brand-600' : 'text-slate-400'
               }`}
             >
-              <item.Icon className={`h-5 w-5 ${active ? 'text-brand-500' : 'text-slate-400'}`} />
+              <item.Icon className={`h-6 w-6 ${active ? 'text-brand-500' : 'text-slate-400'}`} />
               <span className="text-[10px] font-bold tracking-wide">{item.shortLabel}</span>
               {active && (
                 <span className="absolute bottom-0 h-0.5 w-8 rounded-full bg-brand-500"

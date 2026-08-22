@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { WalletIcon, CheckCircleIcon, ClockIcon } from '@/components/icons';
+import Link from 'next/link';
+import { WalletIcon, CheckCircleIcon, ClockIcon, ShieldCheckIcon, ArrowRightIcon } from '@/components/icons';
 
 interface Payout {
   id: string;
@@ -33,10 +34,61 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+type KycStatus = 'PENDING' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+
+function KycGate({ kycStatus }: { kycStatus: KycStatus }) {
+  const isSubmitted = kycStatus === 'SUBMITTED';
+  return (
+    <div className="mx-auto max-w-lg py-20 px-4 text-center">
+      <div className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full ${isSubmitted ? 'bg-brand-100' : 'bg-brand-50'}`}>
+        <ShieldCheckIcon className={`h-10 w-10 ${isSubmitted ? 'text-brand-600' : 'text-brand-400'}`} />
+      </div>
+      <h2 className="mt-5 text-xl font-extrabold text-slate-900">
+        {isSubmitted ? 'Verification under review' : 'Identity verification required'}
+      </h2>
+      <p className="mt-2 text-sm text-slate-500">
+        {isSubmitted
+          ? 'Your documents are being reviewed. Payouts will unlock once your identity is verified — usually within 1–2 business days.'
+          : 'Complete KYC (Know Your Customer) verification to unlock payouts. This protects you and your attendees.'}
+      </p>
+      {!isSubmitted && (
+        <Link
+          href="/dashboard/creator/kyc"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-bold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-500"
+        >
+          Start verification
+          <ArrowRightIcon className="h-4 w-4" />
+        </Link>
+      )}
+      {isSubmitted && (
+        <Link
+          href="/dashboard/creator/kyc"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl border-2 border-brand-200 px-6 py-3 text-sm font-bold text-brand-700 transition hover:border-brand-400 hover:bg-brand-50"
+        >
+          View submission status
+        </Link>
+      )}
+      <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3 text-left">
+        {[
+          { label: 'Secure',      desc: 'Your data is encrypted end-to-end' },
+          { label: 'Fast',        desc: 'Most reviews done in 1 business day' },
+          { label: 'One-time',    desc: 'Verify once, never again' },
+        ].map((f) => (
+          <div key={f.label} className="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+            <p className="text-xs font-extrabold text-brand-700">{f.label}</p>
+            <p className="mt-0.5 text-xs text-brand-600">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function PayoutsPage() {
-  const [data,    setData]    = useState<PayoutSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
+  const [data,      setData]      = useState<PayoutSummary | null>(null);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState('');
+  const [kycStatus, setKycStatus] = useState<KycStatus | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
@@ -45,11 +97,43 @@ export default function PayoutsPage() {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/creators/me/payouts`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
-      .then(setData)
+      .then(async (r) => {
+        if (r.status === 403) {
+          const body = await r.json().catch(() => ({}));
+          if (body.error === 'KYC_REQUIRED') {
+            setKycStatus(body.kycStatus ?? 'PENDING');
+            return null;
+          }
+        }
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      })
+      .then((d) => { if (d) setData(d); })
       .catch(() => setError('Could not load payouts. Please try again.'))
       .finally(() => setLoading(false));
   }, []);
+
+  if (loading) return (
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <div className="mb-8 animate-pulse">
+        <div className="h-8 w-40 rounded-lg bg-slate-200" />
+        <div className="mt-2 h-4 w-80 rounded bg-slate-100" />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {[0, 1].map((i) => <div key={i} className="h-24 rounded-2xl bg-slate-100 animate-pulse" />)}
+      </div>
+    </div>
+  );
+
+  if (kycStatus) return (
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+      <div className="mb-8">
+        <h1 className="text-2xl font-extrabold text-slate-900">Payouts</h1>
+        <p className="mt-1 text-sm text-slate-500">Revenue is transferred to your registered account within 48 hours of each event ending.</p>
+      </div>
+      <KycGate kycStatus={kycStatus} />
+    </div>
+  );
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">

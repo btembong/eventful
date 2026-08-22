@@ -94,6 +94,7 @@ async function buildApp() {
     await v1.register(import('@/modules/creators/announcements.routes'), { prefix: '/creators' });
     await v1.register(import('@/modules/creators/scanner-tokens.routes'), { prefix: '/creators' });
     await v1.register(import('@/modules/creators/support.routes'), { prefix: '/creators' });
+    await v1.register(import('@/modules/creators/kyc.routes'), { prefix: '/creators' });
     await v1.register(import('@/modules/support/support.routes'));
     await v1.register(import('@/modules/account/account.routes'), { prefix: '/account' });
     await v1.register(import('@/modules/organizations/organizations.routes'), { prefix: '/organizations' });

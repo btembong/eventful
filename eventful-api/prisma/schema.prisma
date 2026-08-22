@@ -60,6 +60,13 @@ enum CreatorStatus {
   REJECTED    // rejected; shown reason, can resubmit
 }
 
+enum KycStatus {
+  PENDING    // not started — default for all creators
+  SUBMITTED  // submitted, awaiting admin review
+  APPROVED   // identity verified; payouts unlocked
+  REJECTED   // rejected; reason provided, can resubmit
+}
+
 enum OrgType {
   INDIVIDUAL
   COMPANY
@@ -108,14 +115,28 @@ model User {
   orgPhone               String?
   orgWebsite             String?
   orgDescription         String?
-  kycDocType             String?
-  kycDocUrl              String?
-  payoutType             PayoutType?
-  payoutNumber           String?
-  payoutBankName         String?
   creatorAppliedAt       DateTime?
   creatorReviewedAt      DateTime?
   creatorRejectedReason  String?
+
+  // ── KYC / Identity verification ────────────────────────────────────────
+  kycStatus           KycStatus @default(PENDING)
+  kycSubmittedAt      DateTime?
+  kycReviewedAt       DateTime?
+  kycRejectedReason   String?
+  kycDateOfBirth      String?   // "YYYY-MM-DD"
+  kycAddress          String?
+  kycDocType          String?   // PASSPORT | NATIONAL_ID | DRIVERS_LICENSE
+  kycIdNumber         String?
+  kycDocUrl           String?   // front image URL
+  kycDocBackUrl       String?   // back image URL (not needed for passport)
+
+  // ── Payout details ─────────────────────────────────────────────────────
+  payoutType             PayoutType?
+  payoutNumber           String?
+  payoutBankName         String?
+  payoutAccountHolder    String?
+  payoutBranch           String?
 
   eventsCreated    Event[]           @relation("CreatedEvents")
   tickets          Ticket[]
