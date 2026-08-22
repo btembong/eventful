@@ -7,7 +7,7 @@
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/apps/api/index.ts",
     "worker:dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/apps/worker/index.ts",
     "build": "prisma generate && tsc",
-    "start": "prisma migrate deploy && node -r ./register.js dist/apps/api/index.js",
+    "start": "node -r ./register.js dist/apps/api/index.js",
     "worker": "node -r ./register.js dist/apps/worker/index.js",
     "migrate:deploy": "prisma migrate deploy",
     "prisma:migrate": "prisma migrate dev",
