@@ -221,26 +221,30 @@ export default function BootcampPage() {
     if (Object.keys(e).length > 0) { setErrors(e); return; }
     setSubmitting(true);
     try {
-      const res = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/bootcamp/apply`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fullName:      form.fullName,
           email:         form.email,
           phone:         form.phone,
           country:       form.country,
           background:    form.background,
-          goal:          form.goal,
-          paymentPlan:   form.paymentPlan === 'full' ? 'Full — $250' : 'Installments — $135 × 2',
+          goal:          form.goal || undefined,
+          paymentPlan:   form.paymentPlan === 'full' ? 'FULL' : 'INSTALLMENT',
           paymentMethod: form.paymentMethod,
-          referral:      form.referral,
-          _subject:      `Bootcamp application — ${form.fullName}`,
+          referral:      form.referral || undefined,
         }),
       });
-      if (!res.ok) throw new Error('Submission failed');
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        setErrors({ email: 'An application with this email already exists for this cohort.' });
+        return;
+      }
+      if (!res.ok) throw new Error((data as { error?: string }).error ?? 'Submission failed');
       setSubmitted(true);
     } catch {
-      setErrors({ consent: 'Submission failed — please WhatsApp us at +237 690 07 505 or email bootcamp@digostechnologies.com.' });
+      setErrors({ consent: 'Submission failed — WhatsApp us at +237 690 07 505 or email bootcamp@digostechnologies.com.' });
     } finally {
       setSubmitting(false);
     }

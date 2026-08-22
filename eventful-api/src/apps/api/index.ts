@@ -106,6 +106,7 @@ async function buildApp() {
     await v1.register(import('@/modules/analytics/analytics.routes'));
     await v1.register(import('@/modules/audit/audit.routes'));
     await v1.register(import('@/modules/webhooks/webhooks.routes'));
+    await v1.register(import('@/modules/bootcamp/bootcamp.routes'), { prefix: '/bootcamp' });
 
     // ── Sandbox (dev/staging only) ──────────────────────────────────────────
     if (env.NODE_ENV !== 'production') {

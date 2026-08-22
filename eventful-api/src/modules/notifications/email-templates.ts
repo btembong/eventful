@@ -316,6 +316,40 @@ export function tplVerifyEmail(opts: { fullName: string; verifyUrl: string }): s
   );
 }
 
+/** Bootcamp application — welcome + next steps */
+export function tplBootcampWelcome(opts: {
+  fullName:      string;
+  paymentPlan:   'FULL' | 'INSTALLMENT';
+  paymentMethod: string;
+  cohort:        string;
+}): string {
+  const amountDue  = opts.paymentPlan === 'FULL' ? '$250' : '$135 (first installment)';
+  const totalCost  = opts.paymentPlan === 'FULL' ? '$250' : '$270 ($135 × 2)';
+  const deadline   = opts.paymentPlan === 'INSTALLMENT' ? ' The second instalment of $135 is due by <strong>September 16</strong>.' : '';
+  return shell(
+    greeting(opts.fullName) +
+    label('Bootcamp · Cohort ' + opts.cohort) +
+    h1('Your application is in!') +
+    p('Thank you for applying to the <strong>Intensive Web Development Bootcamp</strong> (September 2 – October 30, 2026). We\'ve received your application and will review it within <strong>48 hours</strong>.') +
+    `<table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:collapse;">
+      <tr><td style="padding:12px 0;border-bottom:1px solid ${BORDER};font-size:14px;color:${MUTED};">Payment plan</td><td style="padding:12px 0;border-bottom:1px solid ${BORDER};font-size:14px;font-weight:700;color:${TEXT};text-align:right;">${opts.paymentPlan === 'FULL' ? 'Pay in full' : '2 Installments'} — ${totalCost}</td></tr>
+      <tr><td style="padding:12px 0;border-bottom:1px solid ${BORDER};font-size:14px;color:${MUTED};">Due today</td><td style="padding:12px 0;border-bottom:1px solid ${BORDER};font-size:14px;font-weight:700;color:${ORANGE};text-align:right;">${amountDue}</td></tr>
+      <tr><td style="padding:12px 0;font-size:14px;color:${MUTED};">Payment method</td><td style="padding:12px 0;font-size:14px;font-weight:600;color:${TEXT};text-align:right;">${opts.paymentMethod}</td></tr>
+    </table>` +
+    p('Once your application is accepted, we\'ll send you payment instructions via a separate email. Your seat is only reserved once payment is confirmed.' + deadline) +
+    h1('What happens next?') +
+    `<ol style="margin:0 0 20px 0;padding-left:20px;font-size:15px;line-height:1.8;color:${TEXT};">
+      <li>We review your application (within 48 hrs)</li>
+      <li>You receive an acceptance email with payment instructions</li>
+      <li>You complete payment to lock in your seat</li>
+      <li>You receive your onboarding kit &amp; Discord invite before September 2</li>
+    </ol>` +
+    divider() +
+    p('Questions? Reply to this email or reach us on WhatsApp: <a href="https://wa.me/23769007505" style="color:${ORANGE};font-weight:600;">+237 690 07 505</a>') +
+    pSmall('Digos Technologies · Bootcamp Division · bootcamp@digostechnologies.com')
+  );
+}
+
 /** Password reset link — expires in 15 minutes */
 export function tplPasswordReset(opts: { fullName: string; resetUrl: string }): string {
   return shell(
