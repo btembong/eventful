@@ -22,7 +22,6 @@ interface FormData {
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const START_DATE = new Date('2026-09-02T09:00:00');
-const END_DATE   = 'October 30, 2026';
 
 const CURRICULUM = [
   {
@@ -221,10 +220,30 @@ export default function BootcampPage() {
     const e = validate();
     if (Object.keys(e).length > 0) { setErrors(e); return; }
     setSubmitting(true);
-    // Simulate submission — replace with real endpoint (Formspree, API route, etc.)
-    await new Promise(r => setTimeout(r, 1200));
-    setSubmitting(false);
-    setSubmitted(true);
+    try {
+      const res = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          fullName:      form.fullName,
+          email:         form.email,
+          phone:         form.phone,
+          country:       form.country,
+          background:    form.background,
+          goal:          form.goal,
+          paymentPlan:   form.paymentPlan === 'full' ? 'Full — $250' : 'Installments — $135 × 2',
+          paymentMethod: form.paymentMethod,
+          referral:      form.referral,
+          _subject:      `Bootcamp application — ${form.fullName}`,
+        }),
+      });
+      if (!res.ok) throw new Error('Submission failed');
+      setSubmitted(true);
+    } catch {
+      setErrors({ consent: 'Submission failed — please email bootcamp@digostechnologies.com directly.' });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function scrollToForm() {
@@ -240,11 +259,10 @@ export default function BootcampPage() {
       <nav className="sticky top-0 z-50 border-b border-slate-100 bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <svg width="22" height="22" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-              <path d="M8 12a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v6a3 3 0 0 0 0 4v6a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4v-6a3 3 0 0 0 0-4v-6z" fill="#F07200"/>
-              <rect x="13" y="18" width="14" height="4" rx="2" fill="white" opacity="0.9"/>
-            </svg>
-            <span className="text-sm font-extrabold text-slate-900">event<span className="text-brand-600">ful</span></span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-brand-950 bg-brand-600 shadow-[2px_2px_0_#333333]">
+              <span className="text-xs font-black text-white">DT</span>
+            </div>
+            <span className="text-sm font-extrabold text-slate-900">Digos<span className="text-brand-600"> Technologies</span></span>
             <span className="ml-1 hidden rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-600 sm:inline">Bootcamp</span>
           </Link>
           <div className="hidden items-center gap-6 text-sm font-semibold text-slate-500 sm:flex">
@@ -505,7 +523,7 @@ export default function BootcampPage() {
           </div>
           <p className="mt-6 text-center text-sm text-slate-400">
             Still have questions?{' '}
-            <a href="mailto:bootcamp@eventful.cm" className="font-semibold text-brand-600 underline underline-offset-2">Email us</a>
+            <a href="mailto:bootcamp@digostechnologies.com" className="font-semibold text-brand-600 underline underline-offset-2">Email us</a>
             {' '}or{' '}
             <a href="https://wa.me/237000000000" className="font-semibold text-brand-600 underline underline-offset-2">WhatsApp us</a>
           </p>
@@ -531,7 +549,7 @@ export default function BootcampPage() {
                 We&apos;ll review your application and email you within 48 hours with next steps and payment instructions. Check your spam folder just in case.
               </p>
               <p className="mt-4 text-xs text-slate-400">
-                Questions? Email <a href="mailto:bootcamp@eventful.cm" className="text-brand-600 font-semibold">bootcamp@eventful.cm</a>
+                Questions? Email <a href="mailto:bootcamp@digostechnologies.com" className="text-brand-600 font-semibold">bootcamp@digostechnologies.com</a>
               </p>
             </div>
           ) : (
@@ -665,7 +683,7 @@ export default function BootcampPage() {
                     I understand this is an intensive programme requiring 15–20 hrs/week of commitment.
                   </ConsentBox>
                   <p className="text-[10px] leading-relaxed text-slate-400">
-                    Your data is used solely to process your application and deliver the bootcamp. We do not share or sell your information to third parties. You may withdraw consent at any time by contacting bootcamp@eventful.cm.
+                    Your data is used solely to process your application and deliver the bootcamp. We do not share or sell your information to third parties. You may withdraw consent at any time by contacting bootcamp@digostechnologies.com.
                   </p>
                 </div>
 
@@ -692,12 +710,12 @@ export default function BootcampPage() {
           <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
             <div>
               <p className="text-sm font-extrabold text-slate-900">The Intensive Web Development Bootcamp</p>
-              <p className="text-xs text-slate-400">September 2 – October 30, 2026 · Powered by Eventful</p>
+              <p className="text-xs text-slate-400">September 2 – October 30, 2026 · Digos Technologies</p>
             </div>
             <div className="flex gap-4 text-xs font-semibold text-slate-400">
               <a href="#" className="transition hover:text-brand-600">Terms</a>
               <a href="#" className="transition hover:text-brand-600">Privacy</a>
-              <a href="mailto:bootcamp@eventful.cm" className="transition hover:text-brand-600">Contact</a>
+              <a href="mailto:bootcamp@digostechnologies.com" className="transition hover:text-brand-600">Contact</a>
             </div>
           </div>
         </div>
