@@ -54,7 +54,7 @@ function GuestAccountAd({ email, name }: { email?: string; name?: string }) {
       </ul>
       <Link
         href={`/register?${params.toString()}`}
-        className="mt-5 flex w-full items-center justify-center rounded-xl bg-brand-600 py-3 text-sm font-bold text-white transition hover:bg-brand-500"
+        className="btn-cartoon mt-5 w-full py-3 text-sm"
       >
         Create free account →
       </Link>
@@ -127,7 +127,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
       <p className="text-xl font-extrabold text-slate-900">Order not found</p>
       <p className="text-sm text-slate-400">Check the link in your email.</p>
-      <Link href="/events" className="mt-2 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-500">
+      <Link href="/events" className="btn-cartoon mt-2 px-6 py-2.5 text-sm">
         Browse events
       </Link>
     </div>
@@ -219,7 +219,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                 <button
                   onClick={handleVerify}
                   disabled={verifying}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3 text-sm font-bold text-white transition hover:bg-brand-500 disabled:opacity-50"
+                  className="btn-cartoon w-full py-3 text-sm disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
                 >
                   {verifying ? <ThinkingOrb state="breathing" size={20} theme="dark" /> : null}
                   {verifying ? 'Checking payment…' : 'Check payment status'}
@@ -234,7 +234,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
             {isPaid && order.event && (
               <Link
                 href={`/e/${order.event.shareSlug}`}
-                className="flex w-full items-center justify-center rounded-xl border border-brand-200 py-3 text-sm font-bold text-brand-700 transition hover:bg-brand-50"
+                className="btn-cartoon-outline w-full py-3 text-sm"
               >
                 Back to event
               </Link>
@@ -242,7 +242,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
             {isCancelled && (
               <Link
                 href="/events"
-                className="flex w-full items-center justify-center rounded-xl bg-brand-600 py-3 text-sm font-bold text-white transition hover:bg-brand-500"
+                className="btn-cartoon w-full py-3 text-sm"
               >
                 Browse other events
               </Link>

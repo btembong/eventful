@@ -57,18 +57,15 @@ export default function Navbar() {
             {/* Desktop auth CTAs */}
             <div className="hidden items-center gap-2 md:flex">
               {isLoaded && user ? (
-                <Link
-                  href={dashboardHref}
-                  className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-brand-500/40 transition hover:bg-brand-400"
-                >
+                <Link href={dashboardHref} className="btn-cartoon-on-dark px-4 py-2 text-sm">
                   Dashboard
                 </Link>
               ) : isLoaded ? (
                 <>
-                  <Link href="/login" className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white">
+                  <Link href="/login" className="btn-ghost-on-dark px-4 py-2 text-sm">
                     Log in
                   </Link>
-                  <Link href="/register" className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-brand-500/40 transition hover:bg-brand-400">
+                  <Link href="/register" className="btn-cartoon-on-dark px-4 py-2 text-sm">
                     Get started
                   </Link>
                 </>
@@ -146,7 +143,7 @@ export default function Navbar() {
             <Link
               href={dashboardHref}
               onClick={() => setMenuOpen(false)}
-              className="flex w-full items-center justify-center rounded-2xl bg-brand-500 py-4 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition hover:bg-brand-400 active:scale-[0.98]"
+              className="btn-cartoon-on-dark w-full py-4 text-sm"
             >
               Go to Dashboard
             </Link>
@@ -155,14 +152,14 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center justify-center rounded-2xl border border-white/20 py-4 text-sm font-semibold text-white/80 transition hover:bg-white/10 hover:text-white active:scale-[0.98]"
+                className="btn-ghost-on-dark w-full py-4 text-sm"
               >
                 Log in
               </Link>
               <Link
                 href="/register"
                 onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center justify-center rounded-2xl bg-brand-500 py-4 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition hover:bg-brand-400 active:scale-[0.98]"
+                className="btn-cartoon-on-dark w-full py-4 text-sm"
               >
                 Get started free
               </Link>

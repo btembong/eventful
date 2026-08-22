@@ -223,7 +223,7 @@ function SignupInner() {
         </div>
         <Link
           href="/login"
-          className="mt-6 block w-full rounded-xl bg-brand-600 py-3 text-sm font-extrabold text-white transition hover:bg-brand-500"
+          className="btn-cartoon mt-6 block w-full py-3 text-sm"
         >
           Go to sign in
         </Link>
@@ -354,7 +354,7 @@ function SignupInner() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-brand-600 py-3 text-sm font-extrabold text-white shadow-sm shadow-brand-600/20 transition hover:bg-brand-500 disabled:opacity-50"
+              className="btn-cartoon w-full py-3 text-sm disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
             >
               {loading ? 'Creating account…' : 'Create account →'}
             </button>

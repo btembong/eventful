@@ -119,6 +119,36 @@
     box-shadow: 0 0 0 #333333;
   }
 
+  /* Primary variant for dark backgrounds (white border + offset) */
+  .btn-cartoon-on-dark {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-3 text-sm font-extrabold text-white;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 3px 3px 0 rgba(255, 255, 255, 0.2);
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .btn-cartoon-on-dark:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 rgba(255, 255, 255, 0.28);
+  }
+  .btn-cartoon-on-dark:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+
+  /* Ghost variant for dark backgrounds */
+  .btn-ghost-on-dark {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-extrabold text-white/80;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    transition: border-color 0.08s ease, color 0.08s ease;
+  }
+  .btn-ghost-on-dark:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+  }
+  .btn-ghost-on-dark:active {
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
   /* Outline variant (white/light bg) */
   .btn-cartoon-outline {
     @apply inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-extrabold text-brand-950;

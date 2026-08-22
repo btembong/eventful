@@ -249,7 +249,7 @@ function SuccessScreen({ email }: { email: string }) {
           <p>When you&apos;re ready to withdraw earnings, complete a quick identity check in Settings.</p>
         </div>
       </div>
-      <Link href="/login" className="mt-8 rounded-xl bg-brand-600 px-8 py-3 text-sm font-bold text-white transition hover:bg-brand-500">
+      <Link href="/login" className="btn-cartoon mt-8 px-8 py-3 text-sm">
         Go to sign in
       </Link>
     </div>
