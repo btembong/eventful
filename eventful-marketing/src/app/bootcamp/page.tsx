@@ -571,11 +571,12 @@ export default function BootcampPage() {
               {/* Photo / avatar */}
               <div className="flex flex-col items-center justify-center gap-4 border-b-2 border-brand-950 bg-brand-50 px-8 py-10 sm:border-b-0 sm:border-r-2">
                 <div className="flex h-28 w-28 items-center justify-center rounded-2xl border-2 border-brand-950 bg-brand-600 shadow-[4px_4px_0_#333333]">
-                  <span className="text-4xl font-black text-white">DT</span>
+                  <span className="text-3xl font-black text-white">BT</span>
                 </div>
                 <div className="text-center">
-                  <p className="text-base font-black text-slate-900">Instructor</p>
-                  <p className="text-sm text-brand-600 font-semibold">Digos Technologies</p>
+                  <p className="text-base font-black text-slate-900">Bejumeh Blaise Tembong</p>
+                  <p className="text-sm text-brand-600 font-semibold">Software · Backend · DevOps Engineer</p>
+                  <p className="mt-1 text-xs text-slate-400">Digos Technologies</p>
                 </div>
                 <div className="flex gap-2">
                   <a
@@ -598,20 +599,20 @@ export default function BootcampPage() {
               {/* Bio */}
               <div className="px-8 py-8">
                 <div className="mb-5 flex flex-wrap gap-2">
-                  {['Full-Stack Developer', '5+ Years Experience', 'React & Next.js', 'Node.js & PostgreSQL'].map(tag => (
+                  {['Software Engineer', 'Backend Engineering', 'DevOps & Infrastructure', 'Production Systems', 'API Design', 'Cloud Deployment'].map(tag => (
                     <span key={tag} className="rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700">{tag}</span>
                   ))}
                 </div>
                 <p className="text-sm leading-relaxed text-slate-600">
-                  Our lead instructor has spent over five years building production web applications for clients across Africa and beyond. With deep expertise in the modern JavaScript ecosystem — React, Next.js, Node.js, and PostgreSQL — they have shipped real products used by thousands of people.
+                  Blaise is a Software, Backend, and DevOps Engineer with years of experience building production-ready applications and infrastructure. He has designed and shipped systems that handle real users, real payments, and real scale — from REST APIs and database architecture to CI/CD pipelines and cloud deployments.
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  Teaching philosophy: no hand-holding, no shortcuts. You will understand <em>why</em> every line of code works, not just copy-paste it. Every concept is grounded in real-world use cases because that is what makes developers hire-ready.
+                  His teaching approach is direct and practitioner-first: every concept is grounded in how it actually works in production, not just how it works in a tutorial. You will leave understanding not just the code, but the engineering decisions behind it.
                 </p>
                 <div className="mt-6 grid grid-cols-3 gap-4 border-t border-slate-100 pt-5">
                   {[
-                    { value: '5+', label: 'Years shipping code' },
-                    { value: '30+', label: 'Projects delivered' },
+                    { value: 'Years', label: 'Shipping production code' },
+                    { value: 'Real', label: 'Apps built & deployed' },
                     { value: '100%', label: 'Practitioner-taught' },
                   ].map(({ value, label }) => (
                     <div key={label}>
