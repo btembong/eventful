@@ -46,16 +46,22 @@ const CURRICULUM = [
     topics: ['React components, props & state', 'Hooks: useState, useEffect, useContext', 'Next.js App Router & server components', 'Styling with Tailwind CSS'],
   },
   {
-    week: 'Week 7–8',
-    title: 'Backend & Databases',
+    week: 'Week 7',
+    title: 'Backend Engineering',
     color: 'bg-brand-700',
-    topics: ['Node.js & REST API design', 'PostgreSQL + Prisma ORM', 'Authentication (JWT, sessions)', 'Deploying to Render / Vercel'],
+    topics: ['Node.js & Fastify REST API design', 'PostgreSQL + Prisma ORM', 'Authentication: JWT, refresh tokens, sessions', 'Middleware, error handling & rate limiting'],
+  },
+  {
+    week: 'Week 8',
+    title: 'Advanced Backend & Payments',
+    color: 'bg-slate-800',
+    topics: ['Redis caching & background job queues (BullMQ)', 'Payment integrations: Stripe, Mobile Money, webhooks', 'File uploads, email delivery (Brevo/Resend)', 'Deploying to Render + Vercel, CI/CD basics'],
   },
   {
     week: 'Week 9',
     title: 'AI Tools & Capstone',
     color: 'bg-slate-900',
-    topics: ['Building with AI (Claude, Copilot, Cursor)', 'Capstone project: full-stack app', 'Code review & portfolio polish', 'Demo day & certificates'],
+    topics: ['Building with AI (Claude, Copilot, Cursor)', 'Capstone project: full-stack app with payments', 'Code review, security audit & portfolio polish', 'Demo day & certificates'],
   },
 ];
 
@@ -68,18 +74,97 @@ const SCHEDULE = [
 ];
 
 const TECH_STACK = [
-  { name: 'HTML5',      bg: 'bg-orange-100',  text: 'text-orange-700',  border: 'border-orange-300',  abbr: 'HT' },
-  { name: 'CSS3',       bg: 'bg-blue-100',    text: 'text-blue-700',    border: 'border-blue-300',    abbr: 'CS' },
-  { name: 'JavaScript', bg: 'bg-yellow-100',  text: 'text-yellow-700',  border: 'border-yellow-300',  abbr: 'JS' },
-  { name: 'React',      bg: 'bg-cyan-100',    text: 'text-cyan-700',    border: 'border-cyan-300',    abbr: 'Re' },
-  { name: 'Next.js',    bg: 'bg-slate-100',   text: 'text-slate-700',   border: 'border-slate-300',   abbr: 'Nx' },
-  { name: 'Tailwind',   bg: 'bg-teal-100',    text: 'text-teal-700',    border: 'border-teal-300',    abbr: 'Tw' },
-  { name: 'Node.js',    bg: 'bg-green-100',   text: 'text-green-700',   border: 'border-green-300',   abbr: 'No' },
-  { name: 'PostgreSQL', bg: 'bg-indigo-100',  text: 'text-indigo-700',  border: 'border-indigo-300',  abbr: 'PG' },
-  { name: 'Git',        bg: 'bg-red-100',     text: 'text-red-700',     border: 'border-red-300',     abbr: 'Gi' },
-  { name: 'VS Code',    bg: 'bg-blue-100',    text: 'text-blue-700',    border: 'border-blue-300',    abbr: 'VS' },
-  { name: 'Vercel',     bg: 'bg-slate-100',   text: 'text-slate-700',   border: 'border-slate-300',   abbr: 'Ve' },
-  { name: 'Claude AI',  bg: 'bg-brand-50',    text: 'text-brand-700',   border: 'border-brand-300',   abbr: 'AI' },
+  // Frontend
+  { name: 'HTML5',       bg: 'bg-orange-100',  text: 'text-orange-700',  border: 'border-orange-300',  abbr: 'HT', tier: 'Frontend' },
+  { name: 'CSS3',        bg: 'bg-blue-100',    text: 'text-blue-700',    border: 'border-blue-300',    abbr: 'CS', tier: 'Frontend' },
+  { name: 'JavaScript',  bg: 'bg-yellow-100',  text: 'text-yellow-700',  border: 'border-yellow-300',  abbr: 'JS', tier: 'Frontend' },
+  { name: 'React',       bg: 'bg-cyan-100',    text: 'text-cyan-700',    border: 'border-cyan-300',    abbr: 'Re', tier: 'Frontend' },
+  { name: 'Next.js',     bg: 'bg-slate-100',   text: 'text-slate-700',   border: 'border-slate-300',   abbr: 'Nx', tier: 'Frontend' },
+  { name: 'Tailwind',    bg: 'bg-teal-100',    text: 'text-teal-700',    border: 'border-teal-300',    abbr: 'Tw', tier: 'Frontend' },
+  // Backend
+  { name: 'Node.js',     bg: 'bg-green-100',   text: 'text-green-700',   border: 'border-green-300',   abbr: 'No', tier: 'Backend' },
+  { name: 'Fastify',     bg: 'bg-slate-100',   text: 'text-slate-700',   border: 'border-slate-300',   abbr: 'Fa', tier: 'Backend' },
+  { name: 'PostgreSQL',  bg: 'bg-indigo-100',  text: 'text-indigo-700',  border: 'border-indigo-300',  abbr: 'PG', tier: 'Backend' },
+  { name: 'Prisma ORM',  bg: 'bg-purple-100',  text: 'text-purple-700',  border: 'border-purple-300',  abbr: 'Pr', tier: 'Backend' },
+  { name: 'Redis',       bg: 'bg-red-100',     text: 'text-red-700',     border: 'border-red-300',     abbr: 'Rd', tier: 'Backend' },
+  { name: 'BullMQ',      bg: 'bg-orange-100',  text: 'text-orange-700',  border: 'border-orange-300',  abbr: 'BQ', tier: 'Backend' },
+  // Payments
+  { name: 'Stripe',      bg: 'bg-violet-100',  text: 'text-violet-700',  border: 'border-violet-300',  abbr: 'St', tier: 'Payments' },
+  { name: 'Mobile Money',bg: 'bg-yellow-100',  text: 'text-yellow-700',  border: 'border-yellow-300',  abbr: 'MM', tier: 'Payments' },
+  { name: 'Webhooks',    bg: 'bg-pink-100',    text: 'text-pink-700',    border: 'border-pink-300',    abbr: 'Wh', tier: 'Payments' },
+  // DevOps & Tools
+  { name: 'Git',         bg: 'bg-red-100',     text: 'text-red-700',     border: 'border-red-300',     abbr: 'Gi', tier: 'DevOps' },
+  { name: 'Docker',      bg: 'bg-blue-100',    text: 'text-blue-700',    border: 'border-blue-300',    abbr: 'Do', tier: 'DevOps' },
+  { name: 'VS Code',     bg: 'bg-blue-100',    text: 'text-blue-700',    border: 'border-blue-300',    abbr: 'VS', tier: 'DevOps' },
+  { name: 'Vercel',      bg: 'bg-slate-100',   text: 'text-slate-700',   border: 'border-slate-300',   abbr: 'Ve', tier: 'DevOps' },
+  { name: 'Render',      bg: 'bg-green-100',   text: 'text-green-700',   border: 'border-green-300',   abbr: 'Rn', tier: 'DevOps' },
+  { name: 'Claude AI',   bg: 'bg-brand-50',    text: 'text-brand-700',   border: 'border-brand-300',   abbr: 'AI', tier: 'DevOps' },
+];
+
+const TECH_TIERS = ['Frontend', 'Backend', 'Payments', 'DevOps'] as const;
+
+const ADVANCED_BACKEND = [
+  {
+    category: 'API Design',
+    icon: '🔌',
+    skills: ['RESTful route design & versioning', 'Request validation with Zod', 'Rate limiting & throttling', 'Pagination, filtering & sorting', 'Error handling middleware'],
+  },
+  {
+    category: 'Auth & Security',
+    icon: '🔒',
+    skills: ['JWT access + refresh token rotation', 'Password hashing with bcrypt', 'Role-based access control (RBAC)', 'CORS, Helmet & XSS prevention', 'Audit logging for sensitive actions'],
+  },
+  {
+    category: 'Performance',
+    icon: '⚡',
+    skills: ['Redis caching layer (TTL strategies)', 'Background job queues with BullMQ', 'Database indexing & query optimization', 'Connection pooling with Prisma', 'Lazy loading & code splitting'],
+  },
+  {
+    category: 'Payment Engineering',
+    icon: '💳',
+    skills: ['Stripe checkout & webhook verification', 'Mobile Money (MTN, Orange) API flows', 'Idempotency keys & duplicate prevention', 'Payment state machine design', 'Refund & dispute handling'],
+  },
+  {
+    category: 'DevOps & CI/CD',
+    icon: '🚀',
+    skills: ['Docker containers & docker-compose', 'Environment management (.env, secrets)', 'Render & Vercel deployment pipelines', 'Health checks & graceful shutdown', 'Logging & error monitoring (Sentry)'],
+  },
+  {
+    category: 'Data & Emails',
+    icon: '📦',
+    skills: ['Relational schema design with Prisma', 'Database migrations & seeding', 'Transactional email via Brevo/Resend', 'File uploads to cloud storage (S3)', 'CSV export & data aggregation'],
+  },
+];
+
+const PAYMENT_GATEWAYS = [
+  {
+    name: 'Stripe',
+    region: 'Global',
+    color: 'bg-violet-50 border-violet-200',
+    badge: 'bg-violet-100 text-violet-700',
+    what: ['Checkout Sessions', 'Payment Intents', 'Webhooks & event verification', 'Refunds & disputes', 'Subscription billing'],
+  },
+  {
+    name: 'MTN Mobile Money',
+    region: 'West & Central Africa',
+    color: 'bg-yellow-50 border-yellow-200',
+    badge: 'bg-yellow-100 text-yellow-700',
+    what: ['Collection API (request to pay)', 'Disbursement API (payouts)', 'Sandbox testing environment', 'Webhook callbacks', 'Idempotency & retry logic'],
+  },
+  {
+    name: 'Orange Money',
+    region: 'Central Africa',
+    color: 'bg-orange-50 border-orange-200',
+    badge: 'bg-orange-100 text-orange-700',
+    what: ['Payment initiation API', 'Status polling & webhooks', 'Merchant portal integration', 'Token-based auth flow', 'Error handling & fallbacks'],
+  },
+  {
+    name: 'PayPal',
+    region: 'Global',
+    color: 'bg-blue-50 border-blue-200',
+    badge: 'bg-blue-100 text-blue-700',
+    what: ['Orders API (v2)', 'Smart Payment Buttons', 'Webhook verification', 'Refund automation', 'Sandbox & live environments'],
+  },
 ];
 
 const OUTCOMES = [
@@ -621,27 +706,110 @@ export default function BootcampPage() {
             <p className="text-xs font-bold uppercase tracking-widest text-brand-600">Tools & Technologies</p>
             <h2 className="mt-2 text-3xl font-black text-slate-900">The modern stack you&apos;ll master</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-slate-500">
-              Every tool here is used in real companies today. You will graduate with a stack that is employer-ready.
+              Every tool here is used in production today. You graduate with a full-stack, payment-ready skillset.
             </p>
           </div>
-          <div className="flex flex-wrap justify-center gap-3">
-            {TECH_STACK.map(({ name, bg, text, border, abbr }) => (
-              <div
-                key={name}
-                className={`flex items-center gap-2.5 rounded-2xl border-2 ${border} ${bg} px-4 py-2.5`}
-                style={{ boxShadow: '3px 3px 0 #33333318' }}
-              >
-                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-current/20 bg-white/60 text-[10px] font-black ${text}`}>
-                  {abbr}
+          <div className="space-y-6">
+            {TECH_TIERS.map(tier => (
+              <div key={tier}>
+                <p className="mb-3 text-[11px] font-black uppercase tracking-widest text-slate-400">{tier}</p>
+                <div className="flex flex-wrap gap-2.5">
+                  {TECH_STACK.filter(t => t.tier === tier).map(({ name, bg, text, border, abbr }) => (
+                    <div
+                      key={name}
+                      className={`flex items-center gap-2.5 rounded-2xl border-2 ${border} ${bg} px-4 py-2.5`}
+                      style={{ boxShadow: '3px 3px 0 #33333318' }}
+                    >
+                      <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-current/20 bg-white/60 text-[10px] font-black ${text}`}>
+                        {abbr}
+                      </div>
+                      <span className={`text-sm font-bold ${text}`}>{name}</span>
+                    </div>
+                  ))}
                 </div>
-                <span className={`text-sm font-bold ${text}`}>{name}</span>
               </div>
             ))}
           </div>
           <div className="mt-8 rounded-2xl border-2 border-brand-200 bg-brand-50 px-5 py-4 text-center">
             <p className="text-sm text-brand-800">
-              <strong>Including AI tools:</strong> you will learn to code alongside Claude AI, GitHub Copilot, and Cursor — the tools that make modern developers 2–3× more productive.
+              <strong>Including AI tools:</strong> you will code alongside Claude AI, GitHub Copilot, and Cursor — the tools that make modern developers 2–3× more productive.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Advanced Backend Engineering ────────────────────────────────────── */}
+      <section className="bg-brand-950 py-16 sm:py-24">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6">
+          <div className="mb-10 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-400">Advanced Concepts</p>
+            <h2 className="mt-2 text-3xl font-black text-white">Backend engineering — the real stuff</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-white/50">
+              Most bootcamps stop at &quot;make a CRUD app.&quot; We go further — production patterns used by real engineering teams.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {ADVANCED_BACKEND.map((block) => (
+              <div key={block.category} className="rounded-2xl border border-white/10 bg-white/5 p-5 hover:bg-white/[0.08] transition">
+                <div className="mb-3 flex items-center gap-2.5">
+                  <span className="text-xl">{block.icon}</span>
+                  <p className="text-sm font-extrabold text-white">{block.category}</p>
+                </div>
+                <ul className="space-y-1.5">
+                  {block.skills.map(skill => (
+                    <li key={skill} className="flex items-start gap-2 text-xs text-white/60">
+                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
+                      {skill}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Payment Integrations ────────────────────────────────────────────── */}
+      <section className="py-16 sm:py-24">
+        <div className="mx-auto max-w-5xl px-5 sm:px-6">
+          <div className="mb-10 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-600">Payment Engineering</p>
+            <h2 className="mt-2 text-3xl font-black text-slate-900">Build apps that actually take money</h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-slate-500">
+              Payment integration is the highest-value backend skill in Africa right now. You will build and ship real payment flows — not just read about them.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {PAYMENT_GATEWAYS.map((gw) => (
+              <div key={gw.name} className={`rounded-2xl border-2 ${gw.color} bg-white p-6`} style={{ boxShadow: '4px 4px 0 #33333318' }}>
+                <div className="mb-4 flex items-start justify-between gap-2">
+                  <h3 className="text-base font-extrabold text-slate-900">{gw.name}</h3>
+                  <span className={`shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-black ${gw.badge}`}>{gw.region}</span>
+                </div>
+                <ul className="space-y-1.5">
+                  {gw.what.map(item => (
+                    <li key={item} className="flex items-center gap-2 text-sm text-slate-600">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8 rounded-2xl border-2 border-brand-950 bg-slate-900 px-6 py-5" style={{ boxShadow: '5px 5px 0 #333333' }}>
+            <div className="grid gap-4 sm:grid-cols-3 text-center">
+              {[
+                { label: 'Idempotency', desc: 'Never double-charge. Learn how to make payment requests safe to retry.' },
+                { label: 'Webhooks', desc: 'Verify and process async payment events from all major gateways.' },
+                { label: 'Test → Live', desc: 'Move from sandbox to production safely with proper env config.' },
+              ].map(({ label, desc }) => (
+                <div key={label}>
+                  <p className="text-sm font-extrabold text-brand-400">{label}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-white/50">{desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
