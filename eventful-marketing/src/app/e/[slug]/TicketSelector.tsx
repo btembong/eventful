@@ -62,42 +62,42 @@ type KindConfig = {
 const KIND_CONFIG: Record<TierKind, KindConfig> = {
   EARLY_BIRD: {
     badge: 'Early Bird',
-    badgeCls: 'bg-brand-100 text-brand-700',
-    cardBg: 'bg-brand-50/50',
+    badgeCls: 'border-2 border-brand-950 bg-brand-500 text-white',
+    cardBg: 'bg-white',
     ringCls: 'ring-brand-500',
     Icon: ClockIcon,
   },
   VIP: {
     badge: 'VIP',
-    badgeCls: 'bg-slate-900 text-brand-400',
-    cardBg: 'bg-slate-50',
+    badgeCls: 'border-2 border-brand-950 bg-brand-950 text-brand-400',
+    cardBg: 'bg-white',
     ringCls: 'ring-slate-700',
     Icon: StarIcon,
   },
   GROUP: {
     badge: 'Group',
-    badgeCls: 'bg-slate-100 text-slate-600',
+    badgeCls: 'border-2 border-brand-950 bg-white text-brand-950',
     cardBg: 'bg-white',
     ringCls: 'ring-brand-400',
     Icon: UsersGroupIcon,
   },
   FREE: {
     badge: 'Free entry',
-    badgeCls: 'bg-brand-100 text-brand-600',
+    badgeCls: 'border-2 border-brand-950 bg-brand-500 text-white',
     cardBg: 'bg-white',
     ringCls: 'ring-brand-400',
     Icon: CheckCircleIcon,
   },
   INVITE_ONLY: {
     badge: 'Invite only',
-    badgeCls: 'bg-slate-100 text-slate-500',
-    cardBg: 'bg-slate-50',
+    badgeCls: 'border-2 border-slate-300 bg-slate-100 text-slate-500',
+    cardBg: 'bg-white',
     ringCls: 'ring-slate-300',
     Icon: LockIcon,
   },
   STANDARD: {
     badge: 'Standard',
-    badgeCls: 'bg-slate-100 text-slate-600',
+    badgeCls: 'border-2 border-brand-950 bg-white text-brand-950',
     cardBg: 'bg-white',
     ringCls: 'ring-brand-400',
     Icon: TicketIcon,
@@ -373,13 +373,21 @@ export default function TicketSelector({ eventId, shareSlug, tiers, coverImageUr
                 disabled={unavail}
                 onClick={() => !unavail && handleSelectTier(tier.id)}
                 className={[
-                  'w-full rounded-2xl border-2 text-left transition-all duration-200',
+                  'w-full rounded-2xl border-2 text-left',
+                  'transition-[transform,box-shadow] duration-[80ms] ease-[ease]',
                   active
-                    ? `border-brand-500 ${cfg.cardBg} ring-2 ${cfg.ringCls}`
+                    ? 'border-brand-600 bg-brand-50'
                     : unavail
-                    ? 'cursor-not-allowed border-slate-100 bg-slate-50 opacity-50'
-                    : `border-slate-100 ${cfg.cardBg} hover:border-brand-300 hover:shadow-sm`,
+                    ? 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-50'
+                    : 'border-brand-950 bg-white hover:-translate-x-0.5 hover:-translate-y-0.5',
                 ].join(' ')}
+                style={
+                  active
+                    ? { boxShadow: '4px 4px 0 #F07200' }
+                    : unavail
+                    ? {}
+                    : { boxShadow: '4px 4px 0 #333333' }
+                }
               >
                 <div className="flex items-stretch">
 
@@ -411,12 +419,12 @@ export default function TicketSelector({ eventId, shareSlug, tiers, coverImageUr
                   <div className="flex flex-1 flex-col gap-1.5 p-3">
                     {/* Badge */}
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${cfg.badgeCls}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${cfg.badgeCls}`}>
                         <cfg.Icon className="h-3 w-3" />
                         {cfg.badge}
                       </span>
                       {kind === 'EARLY_BIRD' && !saleEnded && (
-                        <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[9px] font-semibold text-brand-600">
+                        <span className="rounded-lg border border-brand-300 bg-brand-50 px-1.5 py-0.5 text-[9px] font-bold text-brand-600">
                           Limited time
                         </span>
                       )}
@@ -457,7 +465,7 @@ export default function TicketSelector({ eventId, shareSlug, tiers, coverImageUr
                     {tier.perks?.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {tier.perks.slice(0, 3).map((p) => (
-                          <span key={p} className="inline-flex items-center gap-0.5 rounded-full bg-brand-50 px-2 py-0.5 text-[9px] font-bold text-brand-600">
+                          <span key={p} className="inline-flex items-center gap-0.5 rounded-lg border border-brand-300 bg-brand-50 px-2 py-0.5 text-[9px] font-bold text-brand-600">
                             <CheckIcon className="h-2.5 w-2.5 shrink-0" />
                             {p}
                           </span>
@@ -476,7 +484,7 @@ export default function TicketSelector({ eventId, shareSlug, tiers, coverImageUr
                         type="button"
                         disabled={qty <= 1}
                         onClick={(e) => { e.stopPropagation(); adjustQty(tier.id, -1); }}
-                        className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-brand-400 hover:text-brand-600 disabled:opacity-30"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-brand-950 bg-white text-brand-950 shadow-[2px_2px_0_#333333] transition-[transform,box-shadow] duration-[80ms] hover:-translate-x-px hover:-translate-y-px hover:shadow-[3px_3px_0_#333333] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-30 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
                       >
                         <MinusIcon className="h-3.5 w-3.5" />
                       </button>
@@ -485,7 +493,7 @@ export default function TicketSelector({ eventId, shareSlug, tiers, coverImageUr
                         type="button"
                         disabled={qty >= maxQty}
                         onClick={(e) => { e.stopPropagation(); adjustQty(tier.id, 1); }}
-                        className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-brand-400 hover:text-brand-600 disabled:opacity-30"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-brand-950 bg-white text-brand-950 shadow-[2px_2px_0_#333333] transition-[transform,box-shadow] duration-[80ms] hover:-translate-x-px hover:-translate-y-px hover:shadow-[3px_3px_0_#333333] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:opacity-30 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
                       >
                         <PlusIcon className="h-3.5 w-3.5" />
                       </button>
