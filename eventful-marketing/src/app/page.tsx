@@ -15,8 +15,6 @@ import {
   ShieldCheckIcon,
   WalletIcon,
   QrCodeIcon,
-  CalendarIcon,
-  UsersGroupIcon,
 } from '@/components/icons';
 
 // ─── Category config (display labels mapped to API enum values) ───────────────
@@ -421,79 +419,15 @@ export default async function HomePage() {
       <section className="bg-brand-950 py-12 sm:py-20 lg:py-28">
         <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
           <div className="grid items-center gap-10 lg:gap-16 lg:grid-cols-2">
-            {/* Creator dashboard mockup — mirrors actual /dashboard/creator UI */}
+            {/* Creator dashboard screenshot */}
             <div className="order-2 lg:order-1">
-              <div className="card-cartoon overflow-hidden rounded-2xl bg-slate-50">
-
-                {/* ── Hero banner ── */}
-                <div className="relative overflow-hidden bg-brand-950 px-6 py-6">
-                  <div className="relative z-10">
-                    <p className="text-xs font-semibold text-brand-400">Good morning</p>
-                    <p className="mt-0.5 text-xl font-black text-white">AURÉLIEN N.</p>
-                    <p className="mt-1 text-xs text-white/50">Here&apos;s how your events are doing today.</p>
-                    <div className="mt-4 inline-flex items-center gap-1.5 rounded-xl border-2 border-white/20 bg-white px-4 py-2 text-xs font-extrabold text-brand-950">
-                      <span className="text-sm font-black">+</span> New event
-                    </div>
-                  </div>
-                  {/* Decorative illustration placeholder */}
-                  <div className="pointer-events-none absolute right-0 top-0 flex h-full w-32 items-center justify-end pr-4 opacity-60">
-                    <svg viewBox="0 0 80 80" className="h-20 w-20" fill="none">
-                      <circle cx="40" cy="25" r="16" fill="#F07200" opacity="0.8"/>
-                      <rect x="20" y="42" width="40" height="28" rx="6" fill="#F07200" opacity="0.5"/>
-                      <rect x="28" y="50" width="24" height="3" rx="1.5" fill="white" opacity="0.8"/>
-                      <rect x="28" y="57" width="16" height="3" rx="1.5" fill="white" opacity="0.5"/>
-                    </svg>
-                  </div>
-                </div>
-
-                {/* ── KPI cards ── */}
-                <div className="grid grid-cols-2 gap-3 p-4">
-                  {[
-                    { label: 'REVENUE',       value: 'XAF 12.7M', sub: 'lifetime earnings',  Icon: TagPriceIcon },
-                    { label: 'TICKETS SOLD',  value: '847',        sub: 'all time',           Icon: TicketIcon },
-                    { label: 'ACTIVE EVENTS', value: '3',          sub: 'on sale now',        Icon: CalendarIcon },
-                    { label: 'CHECKED IN',    value: '612',        sub: 'total attendees',    Icon: UsersGroupIcon },
-                  ].map(({ label, value, sub, Icon }) => (
-                    <div key={label} className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
-                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50">
-                          <Icon className="h-4 w-4 text-brand-500" />
-                        </div>
-                      </div>
-                      <p className="text-xl font-black tracking-tight text-slate-900">{value}</p>
-                      <p className="text-[10px] text-slate-400">{sub}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* ── Recent events section ── */}
-                <div className="px-4 pb-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <p className="text-xs font-bold text-slate-900">Recent events</p>
-                    <span className="text-[10px] font-semibold text-brand-600">View all →</span>
-                  </div>
-                  {/* Filter tabs */}
-                  <div className="mb-3 flex gap-1 rounded-xl bg-slate-100 p-1">
-                    {['All', 'On sale', 'Draft', 'Ended', 'Cancelled'].map((t, i) => (
-                      <span key={t} className={`rounded-lg px-2.5 py-1 text-[10px] font-bold whitespace-nowrap ${i === 0 ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400'}`}>
-                        {t}{i > 0 && <span className="ml-1 text-[9px]">0</span>}
-                      </span>
-                    ))}
-                  </div>
-                  {/* Empty state */}
-                  <div className="flex flex-col items-center py-6 text-center">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-950">
-                      <CalendarIcon className="h-5 w-5 text-brand-500" />
-                    </div>
-                    <p className="mt-2 text-xs font-semibold text-slate-700">No events yet</p>
-                    <p className="mt-0.5 text-[10px] text-slate-400">Create your first event to start selling tickets.</p>
-                    <div className="btn-cartoon mt-3 px-4 py-1.5 text-[10px]">
-                      + Create event
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/dashboard.png"
+                alt="Eventful creator dashboard"
+                className="w-full rounded-2xl border-2 border-white/10"
+                style={{ boxShadow: '6px 6px 0 rgba(255,255,255,0.08)' }}
+              />
             </div>
 
             {/* Copy */}
