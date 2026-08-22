@@ -345,7 +345,7 @@ export function tplBootcampWelcome(opts: {
       <li>You receive your onboarding kit &amp; Discord invite before September 2</li>
     </ol>` +
     divider() +
-    p('Questions? Reply to this email or reach us on WhatsApp: <a href="https://wa.me/23769007505" style="color:${ORANGE};font-weight:600;">+237 690 07 505</a>') +
+    p('Questions? Reply to this email or reach us on WhatsApp: <a href="https://wa.me/237690075059" style="color:${ORANGE};font-weight:600;">+237 690 075 059</a>') +
     pSmall('Digos Technologies · Bootcamp Division · bootcamp@digostechnologies.com')
   );
 }
@@ -359,8 +359,8 @@ export function tplBootcampAccepted(opts: {
   const amountDue = opts.paymentPlan === 'FULL' ? '$250' : '$135';
   const planLabel = opts.paymentPlan === 'FULL' ? 'Full payment — $250' : 'First instalment — $135 (second due Sep 16)';
   const payInstructions: Record<string, string> = {
-    'MTN Mobile Money':              'Send to <strong>+237 690 07 505</strong> (Digos Technologies). Use your full name as reference.',
-    'Orange Money':                  'Send to <strong>+237 690 07 505</strong> (Digos Technologies). Use your full name as reference.',
+    'MTN Mobile Money':              'Send to <strong>+237 690 075 059</strong> (Digos Technologies). Use your full name as reference.',
+    'Orange Money':                  'Send to <strong>+237 690 075 059</strong> (Digos Technologies). Use your full name as reference.',
     'Credit / Debit Card (Stripe)':  'You will receive a secure Stripe payment link within 24 hours.',
     'PayPal':                        'Send to <strong>bootcamp@digostechnologies.com</strong> via PayPal Goods & Services. Include your full name in the note.',
   };
@@ -381,7 +381,7 @@ export function tplBootcampAccepted(opts: {
     </div>` +
     p('Once we confirm your payment, you\'ll receive your onboarding kit and Discord/WhatsApp group invite before September 2.') +
     divider() +
-    p('Questions? Reply to this email or WhatsApp: <a href="https://wa.me/23769007505" style="color:${ORANGE};font-weight:600;">+237 690 07 505</a>') +
+    p('Questions? Reply to this email or WhatsApp: <a href="https://wa.me/237690075059" style="color:${ORANGE};font-weight:600;">+237 690 075 059</a>') +
     pSmall('If you cannot pay within 48 hours, please reply to this email to arrange an extension. Unpaid seats are released after 48 hours.') +
     pSmall('Digos Technologies · bootcamp@digostechnologies.com')
   );

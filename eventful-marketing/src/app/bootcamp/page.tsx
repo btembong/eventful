@@ -408,7 +408,7 @@ export default function BootcampPage() {
       // Refresh seat count
       fetch(`${API_URL}/bootcamp/stats`).then(r => r.json()).then(setSeats).catch(() => null);
     } catch {
-      setErrors({ consent: 'Submission failed — WhatsApp us at +237 690 07 505 or email bootcamp@digostechnologies.com.' });
+      setErrors({ consent: 'Submission failed — WhatsApp us at +237 690 075 059 or email bootcamp@digostechnologies.com.' });
     } finally {
       setSubmitting(false);
     }
@@ -580,7 +580,7 @@ export default function BootcampPage() {
                 </div>
                 <div className="flex gap-2">
                   <a
-                    href="https://wa.me/23769007505"
+                    href="https://wa.me/237690075059"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounded-lg border-2 border-brand-950 bg-green-500 px-3 py-1.5 text-[11px] font-black text-white shadow-[2px_2px_0_#333333]"
@@ -993,7 +993,7 @@ export default function BootcampPage() {
             Still have questions?{' '}
             <a href="mailto:bootcamp@digostechnologies.com" className="font-semibold text-brand-600 underline underline-offset-2">Email us</a>
             {' '}or{' '}
-            <a href="https://wa.me/23769007505" className="font-semibold text-brand-600 underline underline-offset-2">WhatsApp us</a>
+            <a href="https://wa.me/237690075059" className="font-semibold text-brand-600 underline underline-offset-2">WhatsApp us</a>
           </p>
         </div>
       </section>
