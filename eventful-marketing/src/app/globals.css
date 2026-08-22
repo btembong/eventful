@@ -87,6 +87,54 @@
     @apply inline-flex items-center gap-2 rounded-full bg-brand-600 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition hover:bg-brand-500 hover:-translate-y-0.5 active:translate-y-0;
   }
 
+  /* ── Neo-brutalist / cartoon card ───────────────────────────────────────── */
+  /* Hard offset shadow, thick border, press-down on active */
+  .card-cartoon {
+    border: 2px solid #333333;
+    box-shadow: 4px 4px 0 #333333;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .card-cartoon:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #333333;
+  }
+  .card-cartoon:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 #333333;
+  }
+
+  /* Neo-brutalist button (chunky, pressable) */
+  .btn-cartoon {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-sm font-extrabold text-white;
+    border: 2px solid #333333;
+    box-shadow: 4px 4px 0 #333333;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .btn-cartoon:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 #333333;
+  }
+  .btn-cartoon:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 #333333;
+  }
+
+  /* Outline variant (white/light bg) */
+  .btn-cartoon-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-extrabold text-brand-950;
+    border: 2px solid #333333;
+    box-shadow: 4px 4px 0 #333333;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .btn-cartoon-outline:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 #333333;
+  }
+  .btn-cartoon-outline:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 #333333;
+  }
+
   /* Safe-area-aware bottom padding for content behind tab bar */
   .pb-tab-safe {
     padding-bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
@@ -110,5 +158,13 @@
     overflow: hidden;
     position: fixed;
     width: 100%;
+  }
+
+  /* Spring-like hover for server-rendered cards (no JS needed) */
+  .spring-hover {
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .spring-hover:hover {
+    transform: translateY(-4px) scale(1.01);
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import {
   ClockIcon, StarIcon, UsersGroupIcon, CheckCircleIcon,
   LockIcon, TicketIcon, CheckIcon, PlusIcon, MinusIcon,
@@ -532,11 +533,15 @@ export default function TicketSelector({ eventId, shareSlug, tiers, coverImageUr
       </details>
 
       {/* ── CTA ────────────────────────────────────────────────────────── */}
-      <button
+      <motion.button
         type="button"
         disabled={!canCheckout}
         onClick={handleGetTickets}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-4 text-sm font-bold text-white shadow-lg shadow-brand-600/20 transition hover:-translate-y-0.5 hover:bg-brand-500 active:translate-y-0 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-40 disabled:shadow-none"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-4 text-sm font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-40"
+        style={{ border: '2px solid #333333', boxShadow: canCheckout ? '4px 4px 0 #333333' : 'none' }}
+        whileHover={canCheckout ? { x: -1, y: -1, boxShadow: '5px 5px 0 #333333' } : {}}
+        whileTap={canCheckout ? { x: 3, y: 3, boxShadow: '0 0 0 #333333' } : {}}
+        transition={{ type: 'spring', stiffness: 500, damping: 22 }}
       >
         <LockIcon className="h-4 w-4 shrink-0" />
         {!selectedTier
@@ -546,7 +551,7 @@ export default function TicketSelector({ eventId, shareSlug, tiers, coverImageUr
           : `Get ${qty > 1 ? `${qty} tickets` : 'ticket'}`
             + (totalPrice > 0 ? ` · ${totalPrice.toLocaleString()} ${selectedTier.currency}` : '')
         }
-      </button>
+      </motion.button>
 
       <p className="text-center text-[11px] text-slate-400">
         Secure checkout · powered by Tranzak

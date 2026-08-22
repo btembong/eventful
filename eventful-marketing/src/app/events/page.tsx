@@ -114,12 +114,12 @@ function EventCard({ event }: { event: Event }) {
   return (
     <Link
       href={`/e/${event.shareSlug}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-brand-100 hover:shadow-lg"
+      className="group card-cartoon flex flex-col overflow-hidden rounded-2xl bg-white"
     >
-      {/* Image / gradient header — compact on mobile (h-28), full on desktop (h-44) */}
+      {/* Image / gradient header */}
       <div className="relative h-28 overflow-hidden bg-brand-950 sm:h-44">
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.05]"
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '18px 18px' }}
         />
         {catMeta && (
@@ -135,15 +135,15 @@ function EventCard({ event }: { event: Event }) {
 
         {/* Category badge */}
         {catMeta && (
-          <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 backdrop-blur-sm sm:right-3 sm:top-3 sm:gap-1.5 sm:px-2.5 sm:py-1">
+          <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2 py-0.5 backdrop-blur-sm sm:right-3 sm:top-3 sm:gap-1.5 sm:px-2.5 sm:py-1">
             <catMeta.Icon className="h-2.5 w-2.5 text-brand-400 sm:h-3 sm:w-3" />
             <span className="text-[9px] font-bold text-white/80 sm:text-[10px]">{catMeta.label}</span>
           </div>
         )}
 
         {/* Price badge */}
-        <div className={`absolute bottom-2 right-2 rounded-full px-2 py-0.5 text-[9px] font-extrabold sm:bottom-3 sm:right-3 sm:px-2.5 sm:text-[10px] ${
-          isFree ? 'bg-brand-600 text-white' : 'bg-white/10 text-white backdrop-blur-sm'
+        <div className={`absolute bottom-2 right-2 rounded-lg border border-white/20 px-2 py-0.5 text-[9px] font-extrabold sm:bottom-3 sm:right-3 sm:px-2.5 sm:text-[10px] ${
+          isFree ? 'bg-brand-500 text-white border-brand-400' : 'bg-brand-950/80 text-white backdrop-blur-sm'
         }`}>
           {isFree ? 'Free' : `from ${event.currency} ${minPrice.toLocaleString()}`}
         </div>
@@ -155,13 +155,13 @@ function EventCard({ event }: { event: Event }) {
           {event.title}
         </h3>
 
-        {/* Venue — hidden on mobile to reduce height */}
+        {/* Venue */}
         <p className="mt-1.5 hidden items-center gap-1.5 text-xs text-slate-500 sm:flex">
           <MapPointIcon className="h-3 w-3 shrink-0 text-slate-400" />
           <span className="truncate">{event.venue}</span>
         </p>
 
-        {/* Date + time — always show */}
+        {/* Date + time */}
         <p className="mt-1.5 flex items-center gap-1 text-[10px] text-slate-500 sm:gap-1.5 sm:text-xs">
           <CalendarIcon className="h-2.5 w-2.5 shrink-0 text-slate-400 sm:h-3 sm:w-3" />
           <span className="truncate">{dayNum} {month} · {timeStr}</span>
@@ -169,15 +169,16 @@ function EventCard({ event }: { event: Event }) {
 
         {/* Availability */}
         <div className="mt-2 sm:mt-3">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold sm:px-2.5 sm:py-1 sm:text-[10px] ${avail.cls}`}>
+          <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[9px] font-bold sm:px-2.5 sm:py-1 sm:text-[10px] ${avail.cls}`}
+            style={{ borderColor: 'currentColor', opacity: 1 }}>
             <span className={`h-1.5 w-1.5 rounded-full ${avail.dot}`} />
             {avail.text}
           </span>
         </div>
 
         {/* CTA */}
-        <div className="mt-2 w-full rounded-xl border border-brand-200 py-2 text-center text-[10px] font-bold text-brand-600 transition group-hover:border-brand-500 group-hover:bg-brand-50 sm:mt-3 sm:py-2.5 sm:text-xs">
-          Get tickets
+        <div className="btn-cartoon mt-2 w-full py-2 text-[10px] sm:mt-3 sm:py-2.5 sm:text-xs">
+          Get tickets →
         </div>
       </div>
     </Link>

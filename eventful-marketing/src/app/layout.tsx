@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans, Slackey } from 'next/font/google';
+import { Bricolage_Grotesque, Slackey } from 'next/font/google';
 import { AuthProvider } from '@/contexts/auth-context';
 import Providers from '@/components/Providers';
 import { ToastProvider } from '@/components/Toast';
 import './globals.css';
 
-const jakarta = Plus_Jakarta_Sans({
+const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
   variable: '--font-jakarta',
   weight: ['400', '500', '600', '700', '800'],
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${slackey.variable}`}>
+    <html lang="en" className={`${bricolage.variable} ${slackey.variable}`}>
       <body className="font-sans">
         <Providers>
           <AuthProvider>

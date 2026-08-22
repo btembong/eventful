@@ -65,8 +65,12 @@ const config: Config = {
         'dots-md': '28px 28px',
       },
       boxShadow: {
-        'ticket': '0 24px 64px -8px rgba(51,51,51,0.55), 0 4px 16px -4px rgba(51,51,51,0.3)',
-        'card-hover': '0 24px 48px -8px rgba(240,114,0,0.20)',
+        'ticket':        '0 24px 64px -8px rgba(51,51,51,0.55), 0 4px 16px -4px rgba(51,51,51,0.3)',
+        'card-hover':    '0 24px 48px -8px rgba(240,114,0,0.20)',
+        'cartoon':       '4px 4px 0 #333333',
+        'cartoon-md':    '6px 6px 0 #333333',
+        'cartoon-sm':    '2px 2px 0 #333333',
+        'cartoon-brand': '4px 4px 0 #F07200',
       },
       keyframes: {
         float: {

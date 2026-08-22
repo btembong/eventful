@@ -144,11 +144,11 @@ export default async function HomePage() {
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3 sm:mt-10 sm:gap-4">
-                <Link href="/events" className="btn-primary px-6 py-3 text-sm sm:px-8 sm:py-3.5 sm:text-base">
+                <Link href="/events" className="btn-cartoon px-6 py-3 text-sm sm:px-8 sm:py-3.5 sm:text-base">
                   Browse events
                   <ArrowRightIcon className="h-4 w-4" />
                 </Link>
-                <Link href="/create" className="rounded-full border-2 border-brand-200 bg-white px-6 py-3 text-sm font-bold text-brand-600 transition hover:bg-brand-50 hover:-translate-y-0.5 sm:px-8 sm:py-3.5 sm:text-base">
+                <Link href="/create" className="btn-cartoon-outline px-6 py-3 text-sm sm:px-8 sm:py-3.5 sm:text-base">
                   Host an event
                 </Link>
               </div>
@@ -175,11 +175,11 @@ export default async function HomePage() {
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                   {LIVE_EVENTS.map((ev) => (
-                    <div key={ev.name} className="flex-none rounded-xl border border-slate-100 bg-white px-3 py-2 shadow-sm">
+                    <div key={ev.name} className="card-cartoon flex-none rounded-xl bg-white px-3 py-2">
                       <p className="text-xs font-bold text-slate-800 whitespace-nowrap">{ev.name}</p>
                       <p className="text-[10px] text-slate-400">
                         {ev.city} ·{' '}
-                        <span className={ev.status === 'Sold out' ? 'text-red-400 font-semibold' : 'text-brand-500 font-semibold'}>
+                        <span className={ev.status === 'Sold out' ? 'text-red-500 font-bold' : 'text-brand-600 font-bold'}>
                           {ev.status}
                         </span>
                       </p>
@@ -257,6 +257,13 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── Blob wave: hero → stats ───────────────────────────────────── */}
+      <div className="relative z-10 -mb-1 overflow-hidden leading-none">
+        <svg viewBox="0 0 1440 70" className="block w-full" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0,35 C240,70 480,0 720,35 C960,70 1200,10 1440,35 L1440,70 L0,70 Z" fill="#333333" />
+        </svg>
+      </div>
+
       {/* ── Stats bar ────────────────────────────────────────────────────── */}
       <section className="relative z-10 bg-brand-950">
         <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6 sm:py-14 lg:px-8">
@@ -299,28 +306,28 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-14 sm:gap-5 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-8 grid grid-cols-2 gap-4 sm:mt-14 sm:gap-5 sm:grid-cols-3 lg:grid-cols-5">
             {CATEGORY_META.map(({ apiValue, name, Icon, desc }) => {
               const count = categoryCounts[apiValue];
               return (
                 <Link
                   key={apiValue}
                   href={`/events?category=${apiValue}`}
-                  className="group flex flex-col items-center gap-5 rounded-3xl bg-white/5 px-4 py-8 text-center ring-1 ring-white/10 transition duration-300 hover:-translate-y-2 hover:bg-white/10 hover:ring-brand-500/50"
+                  className="group card-cartoon flex flex-col items-center gap-5 rounded-2xl bg-white px-4 py-8 text-center"
                 >
-                  <span className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 text-white/50 ring-1 ring-white/10 transition duration-300 group-hover:bg-brand-600 group-hover:text-white group-hover:ring-brand-600">
+                  <span className="flex h-20 w-20 items-center justify-center rounded-xl border-2 border-brand-950 bg-brand-50 text-brand-600 shadow-cartoon transition duration-150 group-hover:bg-brand-600 group-hover:text-white">
                     <Icon className="h-10 w-10" />
                   </span>
                   <div className="space-y-1">
-                    <p className="text-base font-extrabold text-white">{name}</p>
-                    <p className="text-xs leading-relaxed text-white/40">{desc}</p>
+                    <p className="text-base font-extrabold text-brand-950">{name}</p>
+                    <p className="text-xs leading-relaxed text-slate-500">{desc}</p>
                   </div>
                   {count != null && count > 0 ? (
-                    <span className="rounded-full bg-brand-600/20 px-3 py-1 text-xs font-bold text-brand-400 ring-1 ring-brand-500/30 transition duration-300 group-hover:bg-brand-600 group-hover:text-white group-hover:ring-brand-600">
+                    <span className="rounded-lg border border-brand-300 bg-brand-50 px-3 py-1 text-xs font-bold text-brand-600">
                       {count.toLocaleString()} events
                     </span>
                   ) : (
-                    <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-white/20">
+                    <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-400">
                       Coming soon
                     </span>
                   )}
@@ -330,8 +337,8 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-10 text-center">
-            <Link href="/events" className="inline-flex items-center gap-2 text-sm font-bold text-brand-400 hover:text-brand-300 transition">
-              See all events <ArrowRightIcon className="h-4 w-4" />
+            <Link href="/events" className="btn-cartoon inline-flex px-8 py-3 text-sm">
+              See all events →
             </Link>
           </div>
         </div>
@@ -365,8 +372,8 @@ export default async function HomePage() {
                 ))}
               </div>
               <div className="mt-10">
-                <Link href="/events" className="btn-primary">
-                  Find your next event
+                <Link href="/events" className="btn-cartoon">
+                  Find your next event →
                 </Link>
               </div>
             </div>
@@ -398,6 +405,13 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Blob wave: white → dark ───────────────────────────────────── */}
+      <div className="overflow-hidden leading-none -mb-1">
+        <svg viewBox="0 0 1440 70" className="block w-full" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0,20 C360,70 900,0 1440,50 L1440,70 L0,70 Z" fill="#333333" />
+        </svg>
+      </div>
 
       {/* ── For Creators ─────────────────────────────────────────────────── */}
       <section className="bg-brand-950 py-12 sm:py-20 lg:py-28">
@@ -486,8 +500,8 @@ export default async function HomePage() {
                 ))}
               </div>
               <div className="mt-10">
-                <Link href="/create" className="btn-primary">
-                  Start selling tickets
+                <Link href="/create" className="btn-cartoon">
+                  Start selling tickets →
                 </Link>
               </div>
 
@@ -508,6 +522,13 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Blob wave: dark → white ───────────────────────────────────── */}
+      <div className="overflow-hidden leading-none -mb-1 bg-brand-950">
+        <svg viewBox="0 0 1440 70" className="block w-full" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0,50 C400,0 1000,70 1440,20 L1440,70 L0,70 Z" fill="#ffffff" />
+        </svg>
+      </div>
 
       {/* ── For Staff ────────────────────────────────────────────────────── */}
       <section className="bg-white py-12 sm:py-20 lg:py-24">
@@ -624,14 +645,14 @@ export default async function HomePage() {
           <p className="mt-3 text-lg text-white/50 sm:mt-4 sm:text-xl">
             Whether you&apos;re discovering your next favourite night or selling out your next show — Eventful is built for you.
           </p>
-          <div className="mt-8 flex flex-col items-center gap-3 sm:mt-10 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
-            <Link href="/events" className="w-full rounded-full bg-brand-500 px-8 py-3.5 text-sm font-bold text-white shadow-xl shadow-brand-500/30 transition hover:bg-brand-400 hover:-translate-y-0.5 sm:w-auto sm:text-base">
-              Browse events
+          <div className="mt-8 flex flex-col items-center gap-4 sm:mt-10 sm:flex-row sm:flex-wrap sm:justify-center">
+            <Link href="/events" className="btn-cartoon w-full px-8 py-3.5 text-sm sm:w-auto sm:text-base">
+              Browse events →
             </Link>
-            <Link href="/register" className="w-full rounded-full border-2 border-white/20 bg-white/5 px-8 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/10 hover:-translate-y-0.5 sm:w-auto sm:text-base">
+            <Link href="/register" className="btn-cartoon-outline w-full px-8 py-3.5 text-sm sm:w-auto sm:text-base">
               Create an account
             </Link>
-            <a href="mailto:enterprise@eventful.cm" className="w-full rounded-full border border-white/10 px-8 py-3.5 text-sm font-medium text-white/40 transition hover:text-white/70 hover:border-white/20 sm:w-auto sm:text-base">
+            <a href="mailto:enterprise@eventful.cm" className="w-full px-8 py-3.5 text-sm font-semibold text-white/50 transition hover:text-white/80 sm:w-auto sm:text-base">
               Talk to sales →
             </a>
           </div>
