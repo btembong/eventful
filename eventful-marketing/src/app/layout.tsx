@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Bricolage_Grotesque, Slackey } from 'next/font/google';
+import { Bricolage_Grotesque, Space_Grotesk } from 'next/font/google';
 import { AuthProvider } from '@/contexts/auth-context';
 import Providers from '@/components/Providers';
 import { ToastProvider } from '@/components/Toast';
@@ -12,10 +12,10 @@ const bricolage = Bricolage_Grotesque({
   display: 'swap',
 });
 
-const slackey = Slackey({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-slackey',
-  weight: '400',
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
 
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${bricolage.variable} ${slackey.variable}`}>
+    <html lang="en" className={`${bricolage.variable} ${spaceGrotesk.variable}`}>
       <body className="font-sans">
         <Providers>
           <AuthProvider>
