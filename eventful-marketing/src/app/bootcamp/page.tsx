@@ -240,7 +240,7 @@ export default function BootcampPage() {
       if (!res.ok) throw new Error('Submission failed');
       setSubmitted(true);
     } catch {
-      setErrors({ consent: 'Submission failed — please email bootcamp@digostechnologies.com directly.' });
+      setErrors({ consent: 'Submission failed — please WhatsApp us at +237 690 07 505 or email bootcamp@digostechnologies.com.' });
     } finally {
       setSubmitting(false);
     }
@@ -525,7 +525,7 @@ export default function BootcampPage() {
             Still have questions?{' '}
             <a href="mailto:bootcamp@digostechnologies.com" className="font-semibold text-brand-600 underline underline-offset-2">Email us</a>
             {' '}or{' '}
-            <a href="https://wa.me/237000000000" className="font-semibold text-brand-600 underline underline-offset-2">WhatsApp us</a>
+            <a href="https://wa.me/23769007505" className="font-semibold text-brand-600 underline underline-offset-2">WhatsApp us</a>
           </p>
         </div>
       </section>
