@@ -327,15 +327,6 @@ export default async function EventPage({ params }: Props) {
   const dateStr  = fmtDate(event.startsAt);
   const timeStr  = `${fmtTime(event.startsAt)} – ${fmtTime(event.endsAt)}`;
 
-  const d       = new Date(event.startsAt);
-  const dayNum  = d.getDate();
-  const month   = d.toLocaleDateString('en-GB', { month: 'short' }).toUpperCase();
-
-  // Price display
-  const allFree = event.tiers.length > 0 && event.tiers.every(t => t.type === 'FREE');
-  const minPaid = event.tiers.filter(t => t.type === 'PAID').sort((a, b) => Number(a.price) - Number(b.price))[0];
-  const isFree  = allFree || Number(event.price) === 0;
-
   return (
     <div className="min-h-screen bg-white">
 
@@ -399,12 +390,12 @@ export default async function EventPage({ params }: Props) {
 
           {/* Badges */}
           <div className="mt-5 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-white backdrop-blur-sm">
-              <catMeta.Icon className="h-3.5 w-3.5" />
+            <span className="inline-flex items-center gap-2 rounded-lg border-2 border-white/40 bg-brand-600 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-white" style={{ boxShadow: '3px 3px 0 rgba(255,255,255,0.15)' }}>
+              <catMeta.Icon className="h-4 w-4" />
               {catMeta.label}
             </span>
             {event.isCancelled && (
-              <span className="rounded-full bg-red-500/20 px-3 py-1.5 text-xs font-bold text-red-400">Cancelled</span>
+              <span className="rounded-lg border-2 border-red-400 bg-red-500/20 px-3 py-1.5 text-xs font-bold text-red-300">Cancelled</span>
             )}
           </div>
 
@@ -426,7 +417,7 @@ export default async function EventPage({ params }: Props) {
               { Icon: MapPointIcon,   label: 'Venue',    text: event.country ? `${event.venue}, ${event.country}` : event.venue },
               { Icon: UsersGroupIcon, label: 'Capacity', text: `${event.capacity.toLocaleString()} people` },
             ].map(({ Icon, label, text }) => (
-              <div key={label} className="flex flex-col gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <div key={label} className="flex flex-col gap-2 rounded-xl border-2 border-white/30 bg-white/10 px-4 py-3 backdrop-blur-sm" style={{ boxShadow: '3px 3px 0 rgba(255,255,255,0.08)' }}>
                 <div className="flex items-center gap-2">
                   <Icon className="h-5 w-5 shrink-0 text-brand-400" />
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">{label}</span>
@@ -435,6 +426,13 @@ export default async function EventPage({ params }: Props) {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Blob wave divider — dark hero → white content */}
+        <div className="relative h-16 overflow-hidden">
+          <svg viewBox="0 0 1440 64" preserveAspectRatio="none" className="absolute inset-0 h-full w-full" aria-hidden="true">
+            <path d="M0,32 C180,64 360,0 540,32 C720,64 900,0 1080,32 C1260,64 1350,16 1440,32 L1440,64 L0,64 Z" fill="white"/>
+          </svg>
         </div>
       </div>
 
@@ -448,18 +446,17 @@ export default async function EventPage({ params }: Props) {
 
               {/* Cover image / clean placeholder */}
               {event.coverImageUrl ? (
-                <div className="overflow-hidden rounded-2xl shadow-2xl ring-1 ring-black/5">
+                <div className="overflow-hidden rounded-2xl border-2 border-brand-950" style={{ boxShadow: '6px 6px 0 #333333', aspectRatio: '4/5' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={event.coverImageUrl}
                     alt={event.title}
-                    className="w-full object-cover"
-                    style={{ aspectRatio: '4/5' }}
+                    className="h-full w-full object-cover"
                   />
                 </div>
               ) : (
                 /* Clean placeholder — no text, no date */
-                <div className="relative overflow-hidden rounded-2xl bg-brand-950 shadow-2xl" style={{ aspectRatio: '4/5' }}>
+                <div className="relative overflow-hidden rounded-2xl border-2 border-brand-950 bg-brand-950" style={{ boxShadow: '6px 6px 0 #333333', aspectRatio: '4/5' }}>
                   <div
                     className="pointer-events-none absolute inset-0 opacity-[0.035]"
                     style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }}
@@ -549,20 +546,20 @@ export default async function EventPage({ params }: Props) {
               )}
             </div>
 
-            {/* Date · Time · Venue · Capacity */}
-            <div className="space-y-4">
+            {/* Date · Time · Venue · Capacity — cartoon info grid */}
+            <div className="grid grid-cols-2 gap-3">
               {[
                 { Icon: CalendarIcon,   text: dateStr,                                       sub: 'Date' },
                 { Icon: ClockIcon,      text: timeStr,                                       sub: 'Time' },
                 { Icon: MapPointIcon,   text: event.venue,                                   sub: 'Venue' },
                 { Icon: UsersGroupIcon, text: `${event.capacity.toLocaleString()} capacity`, sub: 'Capacity' },
               ].map(({ Icon, text, sub }) => (
-                <div key={sub} className="flex items-center gap-4">
-                  <Icon className="h-6 w-6 shrink-0 text-brand-500" />
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{sub}</p>
-                    <p className="text-base font-semibold text-slate-900">{text}</p>
+                <div key={sub} className="flex flex-col gap-2 rounded-xl border-2 border-brand-950 bg-brand-50 px-4 py-3" style={{ boxShadow: '3px 3px 0 #333333' }}>
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-5 w-5 shrink-0 text-brand-600" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{sub}</span>
                   </div>
+                  <p className="text-sm font-bold leading-snug text-brand-950">{text}</p>
                 </div>
               ))}
             </div>
@@ -587,7 +584,7 @@ export default async function EventPage({ params }: Props) {
             {/* Description */}
             {event.description && (
               <div className="mt-7 mb-7">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">About</p>
+                <h2 className="mb-3 border-l-4 border-brand-600 pl-3 text-sm font-black uppercase tracking-widest text-brand-950">About</h2>
                 <p className="whitespace-pre-line leading-relaxed text-slate-600">{event.description}</p>
               </div>
             )}
@@ -603,18 +600,19 @@ export default async function EventPage({ params }: Props) {
 
           {/* ── Col 3: Ticket selector ──────────────────────────────────── */}
           <div className="w-full lg:w-[300px] lg:shrink-0">
-            <div className="sticky top-20 space-y-4">
+            <div className="sticky top-20">
+              <div className="rounded-2xl border-2 border-brand-950 bg-white p-5 space-y-4" style={{ boxShadow: '6px 6px 0 #333333' }}>
 
               {/* Capacity bar */}
               {!event.isCancelled && tickets > 0 && (
                 <div>
-                  <div className="mb-1.5 flex items-center justify-between text-xs text-slate-400">
+                  <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500">
                     <span>{tickets.toLocaleString()} sold</span>
                     <span>{remaining.toLocaleString()} remaining</span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-3 overflow-hidden rounded-lg border-2 border-brand-950 bg-slate-100" style={{ boxShadow: '2px 2px 0 #333333' }}>
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-brand-600 to-brand-400 transition-all"
+                      className="h-full rounded-md bg-brand-600 transition-all"
                       style={{ width: `${soldPct}%` }}
                     />
                   </div>
@@ -650,10 +648,11 @@ export default async function EventPage({ params }: Props) {
               {/* Social proof */}
               {!event.isCancelled && (
                 <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse" />
+                  <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-brand-400" />
                   {viewCount} people viewed this today
                 </p>
               )}
+              </div>
             </div>
           </div>
 
